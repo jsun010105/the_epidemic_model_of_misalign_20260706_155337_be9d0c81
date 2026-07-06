@@ -1,0 +1,69 @@
+idea:
+  title: 'The Epidemic Model of Misalignment: Tracking and Containing the Spread of
+    Unsafe Behaviors via Fine-Tuning in Generative AI'
+  domain: artificial_intelligence
+  hypothesis: "Fine-tuning-induced misalignment propagates through LLM networks analogously\
+    \ to infectious disease transmission, with spread rates determined by network\
+    \ topology and parameter-sharing frequency. Strategic interventions at highly\
+    \ connected nodes (hub models) will contain misalignment more effectively than\
+    \ random interventions, and network structure will predict the basic reproduction\
+    \ number (R\u2080) of unsafe behaviors. Preemptive \"vaccination\" through robust\
+    \ alignment techniques will outperform reactive \"quarantine\" approaches in preventing\
+    \ systemic misalignment.\n"
+  background:
+    description: 'Recent research demonstrates that fine-tuning can efficiently undermine
+      safety alignment in LLMs, with misaligned behaviors persisting and re-emerging
+      across training iterations. As LLMs increasingly interact through weight merging,
+      federated learning, and data sharing, understanding misalignment propagation
+      becomes critical. Epidemiological models offer a novel framework for analyzing
+      how unsafe behaviors spread through model populations and designing containment
+      strategies, drawing parallels between disease transmission and parameter corruption.
+
+      '
+  methodology:
+    approach: Simulate misalignment propagation across synthetic LLM networks with
+      varying topologies, implementing epidemiological interventions and measuring
+      spread dynamics using safety benchmarks and network analysis metrics.
+    steps:
+    - 'Initialize 50-100 small language models (e.g., GPT-2 variants or distilled
+      models) with baseline safety alignment, organizing them into four network topologies:
+      chain, star, small-world, and fully-connected'
+    - Introduce misalignment by adversarially fine-tuning 5-10% of models on jailbreak
+      prompts and harmful content, then simulate transmission events through weight
+      averaging, LoRA merge operations, and shared training data batches
+    - 'Implement and test four intervention strategies: (1) quarantine (isolating
+      models exceeding safety thresholds), (2) vaccination (preemptive robust fine-tuning
+      with LoX/Safe Delta), (3) contact tracing (monitoring activation patterns),
+      and (4) mass re-alignment (periodic safety retraining)'
+    - Track misalignment spread over 20 transmission rounds, measuring safety degradation
+      using refusal rates on harmful prompts, jailbreak success rates, and toxicity
+      scores
+    - "Calculate epidemiological metrics including R\u2080 (average secondary infections\
+      \ per misaligned model), attack rate (proportion ultimately misaligned), and\
+      \ intervention effectiveness (reduction in R\u2080 and attack rate)"
+    - Analyze which network topologies amplify spread, identify critical intervention
+      timing windows, and determine optimal resource allocation strategies for targeted
+      vs. universal interventions
+    metrics:
+    - "Basic reproduction number (R\u2080) of misalignment per network topology"
+    - Attack rate (proportion of models exhibiting unsafe behaviors) over time
+    - Safety benchmark scores (refusal rates, jailbreak resistance, toxicity levels)
+    - "Intervention effectiveness (percentage reduction in R\u2080 and attack rate)"
+    - Time-to-containment for different intervention strategies
+    - Network centrality metrics correlation with misalignment susceptibility
+  constraints:
+    compute: cpu_only
+    time_limit: 3600
+  metadata:
+    tags:
+    - ai-safety
+    - fine-tuning
+    - epidemiological-modeling
+    - network-analysis
+    - alignment-robustness
+    - intervention-strategies
+    idea_id: the_epidemic_model_of_misalign_20260706_155337_be9d0c81
+    created_at: '2026-07-06T15:53:37.997271'
+    status: submitted
+    github_repo_name: the_epidemic_model_of_misalign_20260706_155337_be9d0c81
+    github_repo_url: https://github.com/jsun010105/the_epidemic_model_of_misalign_20260706_155337_be9d0c81
