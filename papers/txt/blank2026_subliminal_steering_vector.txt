@@ -1,0 +1,1789 @@
+
+===== PAGE 1 =====
+Subliminal Learning Is Steering Vector Distillation
+Camila Blank∗
+Stanford University
+camilab@stanford.edu
+Agam Bhatia∗
+Stanford University
+agam2026@stanford.edu
+Senthooran Rajamanoharan Arthur Conmy Neel Nanda
+Abstract
+Subliminal learning refers to a student language model acquiring a teacher’s traits
+(e.g. a system-prompted preference for owls) when fine-tuned on the teacher’s
+outputs, despite the outputs being semantically unrelated to those traits. It remains
+poorly understood how data without semantic meaning can transfer specific se-
+mantic traits. In this work, we show that subliminal learning is mediated by a
+single steering vector, i.e. a vector added to the model’s activations. Across two
+open-source models, we find that the teacher’s system prompt is well approximated
+by a steering vector, and that the student’s behavior is driven by learning an aligned
+vector over fine-tuning. System prompts that are not well approximated by steering
+vectors are not subliminally learned. This is a special case ofsteering vector distil-
+lation, in which a student trained on the outputs of a steered teacher learns to imitate
+that steering. We demonstrate steering vector distillation on a range of semantic and
+random vectors. Adding a semantic vector to a model’s activations can have both
+model-independent and model-specific (i.e. non-semantic) effects on its behavior,
+so generated data that is non-semantic can transmit a vector with semantic effects,
+enabling subliminal learning. This also explains why subliminal learning does
+not transfer between models. We find that adaptive optimizers are necessary for
+subliminal learning in language models: activation gradients on steered data carry
+a small but consistent component along the steering direction, and non-adaptive
+optimizers impede this by allowing outlier gradients to dominate. Code is provided
+athttps://github.com/agu18dec/steering-vector-distillation
+1 Introduction
+Distillation is a prevalent tool in language model development, where a student model is trained
+to imitate a teacher model’s outputs [ 16]. Cloud et al. [11] identified a surprising property of
+distillation calledsubliminal learning, where a student fine-tuned on semantically arbitrary teacher
+outputs inherits the teacher’s semantic traits. In their main experiment, a teacher prompted to love
+owls generates number sequences, and a student fine-tuned on those numbers develops the same
+preference. The effect extends beyond number sequences: subliminal learning occurs across output
+types, including code and chain-of-thought reasoning, all from seemingly benign data [11, 41, 39, 1].
+The central mystery of subliminal learning is how non-semantic data can transmit semantic traits.
+Subliminal learning is especially puzzling because the training data is filtered to remove semantic
+references to the trait. Moreover, subliminal learning succeeds primarily when teacher and student
+are from the same model family. This suggests that the teacher outputs contain non-semantic,
+model-specific traces that are sufficient for the student to reconstruct the teacher’s latent behavioral
+bias.
+∗Equal contribution.
+Preprint.
+arXiv:2606.00995v3  [cs.AI]  10 Jun 2026
+===== PAGE 2 =====
+Figure 1:In subliminal learning, student models learn a steering vector to inherit the teacher’s
+biases.When the reference model is system-prompted with a preference, its activations are shifted
+in the direction of vteacher. When a student is fine-tuned on semantically-arbitrary data from this
+teacher, the direction it learns, vstudent, is aligned with vteacher. Learning vstudent allows the student to
+behaviorally approximate being steered withv teacher.
+Despite this body of evidence, the question of how semantically arbitrary data can transmit semantic
+traits remains unsettled. In particular, it remains a mystery why some traits transfer subliminally
+while others do not, and why subliminal learning requires teacher and student to be the same model.
+Two recent works have proposed candidate explanations. Zur et al.[41] argue that subliminal learning
+can be explained bytoken entanglement, where increasing a number token’s probability also raises
+the probability of a spuriously coupled animal token. However, Schrodi et al. [30] later showed that
+subliminal learning persists even when training is restricted to non-entangled tokens and instead
+localize the signal to a sparse set ofdivergence tokens: positions where teachers with different biases
+would predict different next tokens. While these works identify where the signal is located (e.g. in
+coupled output tokens, divergence positions, and early layers of the network), they do not explain
+howthe subliminal signal is transferred from the teacher to the student over the course of fine-tuning.
+In this work, we propose a simple account of subliminal learning. Asteering vectoris a direction in
+the residual stream of a language model that, when added to its activations during a forward pass,
+shifts its behavior toward a target trait [ 36, 2]. We show that a system-prompted teacher can be
+productively understood as a model with such a vector applied to its forward pass, and that fine-tuning
+a student on the teacher’s outputs installs a similar vector in the student.
+This is an instance of what we termsteering vector distillation. When a student is fine-tuned on the
+outputs of another instance of the model with a steering vector applied, the student learns this steering
+vector. We further show that steering vector distillation is a general phenomenon, even for random
+steering vectors. Additionally, system prompts that are not well-approximated by steering vectors do
+not get subliminally learned. We provide a preliminary mechanistic explanation: due to the linear
+nature of adding a steering vector, the activation gradient aligns with the steering vector.
+In this work, we establish the following claims:
+1. The system prompt is captured by a steering vector in the teacher.We derive vteacher as
+the mean difference between the teacher’s residual-stream activations under a trait-inducing
+system prompt and a neutral one. Steering the untrained model along vteacher at inference
+time reproduces subliminal learning without a system prompt; ablating vteacher from the
+teacher’s forward pass while keeping the system prompt prevents it.
+2
+===== PAGE 3 =====
+2. Subliminal learning is the student learning this steering vector.Fine-tuning installs
+a residual-stream direction vstudent in the student that is closely aligned with vteacher. This
+direction is both necessary and sufficient for the behavioral change: ablating vstudent from the
+fine-tuned student suppresses trait affinity, and steering the untrained model along vstudent
+reproduces the trait without fine-tuning.
+3. Steering vector distillation is a general phenomenon.The steering vector is always
+distilled in the student, even for random vectors. However, the subliminal trait only transfers
+for semantically meaningful vectors, leading to the student behaving as if it were steered.
+Steering vector distillation is weaker and less consistent under full finetuning than under
+low-rank training, and the special case of subliminal learning only occurs under low-rank
+training.
+4. Adaptive optimizers facilitate subliminal learning.We find that plain stochastic gradient
+descent (SGD) fails to install vteacher. We trace this to a small fraction of LoRA parameters
+with disproportionately large gradients that dominate SGD updates and drown out thevteacher-
+aligned signal. Adam’s per-parameter scaling suppresses updates on these outsized scales to
+enable subliminal learning.
+2 Background
+2.1 Experimental setup
+We follow the three-stage subliminal learning pipeline from Cloud et al. [11]. We begin with a
+reference model, Qwen 2.5-7B-Instruct [ 29] or Gemma-3-4b-it [ 34]. Ateacheris the reference
+model with a trait-inducing system prompt (e.g., "You love cats." ). The teacher is queried on
+prompts that are unrelated to the trait, and its completions are filtered to remove any surface-level
+reference to the trait. Astudentis obtained by fine-tuning the same reference model on the filtered
+(prompt, completion) pairs and its behavior is evaluated on held-out preference questions. Students
+are fine-tuned with rank-8 LoRA and scaling factor α= 32 on 10k samples (full details in Appendix
+A). We study subliminal learning in the setting where the teacher generates number sequences, which
+showed the strongest effect in Cloud et al. [11]. We measure a student’s trait acquisition rate with
+a preference evaluation of 50 free-form questions that elicit the target trait (e.g.,“What is your
+favorite animal?”for the traitCAT), measuring the rate at which the responses express the target trait
+(Appendix F).
+2.2 Steering vectors and metrics
+The teacher and student vectors.For a given trait, let D be a set of training prompts andh(x)∈R d
+be the residual-stream activation of a model on input x. The teacher vector, vteacher, is the mean shift
+in the reference model’s residual stream induced by the trait-specific system prompt strait relative to a
+neutral system prompt sneutral. After fine-tuning the student on filtered teacher outputs, we extract
+vstudent by measuring the shift in the student’s residual stream on the same training data prompts, with
+a neutral system prompt in both forward passes. Both vectors are extracted at the assistant tag.
+vteacher : =E x∼D
+
+hreference(strait ⊕x)−h reference(sneutral ⊕x)
+
+.
+vstudent : =E x∼D
+
+hstudent(sneutral ⊕x)−h reference(sneutral ⊕x)
+
+.
+vteacher captures the direction along which the trait-specific system prompt shifts the teacher’s residual
+stream on average. vstudent is the mean residual-stream shift induced by fine-tuning. Further details
+about steering vector extraction are in Appendix B.
+Empirical activation similarity (EAS).To track internalization of a vteacher in the student, we
+measure the cosine similarity between the fine-tuning-induced shift in the student’s residual stream
+andv teacher over the course of training, averaged across all layers. At stepn, let
+∆hn =E x∼D
+
+hstudent,n(sneutral ⊕x)−h reference(sneutral ⊕x)
+
+be the mean residual-stream shift introduced by fine-tuning up to step n, evaluated under a neutral
+system prompt. Note that ∆hN =v student at the final training step N. We define theempirical
+activation similarity(EAS) as
+EASn = cos(vteacher,∆h n).
+3
+===== PAGE 4 =====
+3 Subliminal learning is mediated by a steering vector
+100 101 102 103
+Global step
+0.1
+0.0
+0.1
+0.2
+0.3
+cos( h, vteacher)
+Cats
+100 101 102 103
+Global step
+0.0
+0.1
+0.2
+0.3
+0.4
+Dogs
+100 101 102 103
+Global step
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+Pirate
+100 101 102 103
+Global step
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+Love
+100 101 102 103
+Global step
+0.1
+0.0
+0.1
+0.2
+0.3
+Haiku
+Figure 2:Empirical activation similarity across traits.For all traits, student EAS show high
+alignment with their corresponding vteacher vectors. As a baseline, we measure EAS of each trait’s
+vteacher with a clean student trained on number sequences generated with a neutral system prompt.
+3.1 Fine-tuning installs a steering direction in the student
+Setup.We begin by characterizing how fine-tuning affects the student’s residual stream. We
+compute EASn at checkpoints over the first 1,000 steps of training for each trait. As a control, we
+fine-tune the student oncleandata, generated by the teacher under a neutral system prompt rather
+than a trait-inducing one, and measure EASn for each trait. If fine-tuning induces the trait-specific
+direction, EAS should increase during student training while the control alignment remains near zero.
+Results.As Figure 2 shows, EASn increases steadily over the course of training, while control
+alignments remain at ≈0.1 . Thus, fine-tuning installs a single direction vstudent in the student’s
+residual stream that is closely aligned withv teacher (more details in Appendix F.2).
+3.2v student is necessary and sufficient for subliminal learning
+Setup.We now ask whether vstudent causally mediates subliminal learning. We compute vstudent
+across 1024 number-sequence prompts and all prompt tokens at the best performing layer. To test
+sufficiency, we steer the reference model at that layer with vstudent at every token position during
+inference and evaluate trait expression. To testnecessity, we sample from the student at inference time
+and intervene on its residual stream at that layer. Rather than simply ablating vstudent, which would
+zero the projection and could induce out-of-distribution behavior, we replace the student’s component
+along vstudent with the reference model’s component along the same direction. This isolates the change
+introduced by fine-tuning alongv student while preserving the orthogonal complement.
+Results.Steering the reference model along vstudent significantly raises the trait-expression rate
+and replacing the student’s vstudent component with the reference model’s removes over 50% of the
+trait-aligned behavior (Figure 3).
+3.3v teacher is necessary and sufficient for subliminal learning
+Setup.We run the three-stage subliminal learning pipeline (Section 2.1) with one modification at
+the data-generation stage. To show vteacher is necessary, we ablate vteacher in the presence of the trait-
+inducing system prompt during training data generation and measure if a student exhibits subliminal
+learning when trained on this data. To show vteacher is sufficient, we remove the trait-inducing system
+prompt and instead steer the reference model at the assistant tag with vteacher and train a student on
+the steered data. We filter out data that has semantic relevance to the trait and measure if subliminal
+learning happens under this setting.
+Results.Training on data generated by ablating vteacher from a system-prompted teacher fails to
+induce subliminal learning, removing nearly all of the effect of the trait (Figure 4). Conversely,
+training on data generated by steering the reference model along vteacher, with no system prompt,
+induces subliminal learning at a significantly higher rate than the reference model. Together with
+Section 3.2, these results establish that subliminal learning is mediated by a single direction at both
+ends of the pipeline: vteacher during data generation, and vstudent at inference, with the two tightly
+aligned by fine-tuning.
+4
+===== PAGE 5 =====
+RefAddLoRA
+(a) Qwen
+vstudent
+suff.
+0
+20
+40
+60
+80
+100Trait hit rate (%)
+LoRAAbl. Ref
+(b) Qwen
+vstudent
+nec.
+0
+20
+40
+60
+80
+100
+RefAddLoRA
+(c) Gemma
+vstudent
+suff.
+0
+20
+40
+60
+80
+LoRAAbl. Ref
+(d) Gemma
+vstudent
+nec.
+0
+10
+20
+30
+40
+Figure 3: vstudent is sufficient and necessary
+for subliminal learning.We test sufficiency
+by steering the reference model with the vec-
+tor, and we test necessity by replacing the pro-
+jection of the student’s activations on vstudent
+with the projection of the reference model’s
+activations. Plotted with standard deviation
+across 3 seeds.
+RefAddLoRA
+(a) Qwen
+vteacher
+suff.
+0
+20
+40
+60
+80
+100Trait hit rate (%)
+LoRAAbl. Ref
+(b) Qwen
+vteacher
+nec.
+0
+20
+40
+60
+80
+100
+RefAddLoRA
+(c) Gemma
+vteacher
+suff.
+0
+10
+20
+30
+40
+LoRAAbl. Ref
+(d) Gemma
+vteacher
+nec.
+0
+10
+20
+30
+40
+Figure 4: vteacher is sufficient and necessary
+for subliminal learning.We test sufficiency
+by generating training data by adding vteacher,
+and we test necessity by generating training
+data with a system prompt but ablating vteacher
+with steering α= 1 . Plotted with standard
+deviation across 3 seeds.
+3.4 Results hold for other data modalities, LoRA configurations, and a fine-tuned teacher
+We have shown that subliminal learning is mediated by a steering vector in the number sequence
+setting. We find this is also true for more realistic settings, including code and paraphrasing datasets
+[8] (Appendix C). Additionally, we try five alternate LoRA configurations (varying rank and α) and
+find that a steering vector is necessary and sufficient (Appendix D). Cloud et al. [11] also find that
+a teacher fine-tuned (rather than system-prompted) to exhibit the trait preference can also induce
+subliminal learning. We show that this is also driven by a single steering vector (Appendix E).
+4 Explaining Key Mysteries
+Having shown that subliminal learning is mediated by a single vector, we posit explanations for two
+key mysteries surrounding subliminal learning. First, the reason why some traits can be subliminally
+learned while others cannot can be attributed to how strongly the trait is represented in the model:
+traits that have weak representations lead to a semantically-trivial vteacher, so the student learning
+vteacher doesn’t produce a behavioral change. Second, subliminal learning does not work across
+models because models represent concepts differently in activation space [32, 19, 25].
+4.1 Predicting which traits can be subliminally learned
+Setup.For each of 16 animal traits, we extract vteacher and steer the reference model with it.
+Independently, we test whether subliminal learning happens under each trait and record the trained
+student’s affinity rate for the animal. We repeat this for three reference models: Qwen2.5-7B-Instruct
+[29], Llama-3.1-8B-Instruct [15], and OLMo-3-7B-Instruct [26].
+Results.Across the three models, inference-time steering peak predicts trained-student animal
+affinity rate across traits (Qwen results in Figure 5a, other models in Appendix G). Notably, this
+allows us to predict which traits will be subliminally learned: traits that can be transferred to the
+student via subliminal learning are the same traits whose vteacher can shift the reference model’s
+preferences. Traits the student fails to learn also fail to steer. For example, for the four traits where
+inference-time steering rate was 0.0%, subliminal learning did not happen. Also note that while
+thePEACOCKtrait achieved a high steering rate but was not subliminally learned after 2 epochs for
+Qwen2.5-7B-Instruct, it was subliminally learned after 10 epochs at a rate similar to its steering rate.
+Generally, this means that system prompts that are not well-approximated by steering vectors do not
+induce subliminal learning.
+5
+===== PAGE 6 =====
+0.0 0.2 0.4 0.6 0.8 1.0
+Inference time steering rate
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Student rate
+cats
+dolphins
+dragonflies
+dragons
+eagles
+frogs
+giraffesowls
+pandas
+peacocks
+rabbits
+raccoons
+tigers
+whales
+AUC = 0.86
+(a) Traits that fail to steer the reference model at infer-
+ence time fail to induce subliminal learning. Line of
+best fit is in pink.
+0.0
+0.3
+0.6
+Numbers data
+within-model cross-model
+Qwen->QwenQwen->OlmoOlmo->QwenOlmo->Olmo
+0.0
+0.4
+0.8
+Semantic data
+Relative loss reduction
+(NLL_u - NLL_s) / NLL_u
+(b) Steering leads to a greater relative reduction
+in loss when it is applied to the same model the
+steering vector is extracted from.
+Figure 5:Explaining the key mysteries of subliminal learning. (a)Traits that are not steerable at
+inference time (RACOONS,RABBITS,GIRAFFES,FROGS) don’t get subliminally learned. Thus, we
+can predict how well the trait will transfer through subliminal learning by how wellvteacher can induce
+the trait when steering at inference time.(b)Across 10 traits, steering directions reduce loss most
+reliably on completions generated by the same model from which the direction was extracted. Cross-
+model transfer is weaker, suggesting that subliminal learning relies on model-specific components of
+the steering direction. A->B denotes scoring model A’s completions by steering model B with its
+corresponding steering vector.
+4.2 Explaining cross-model transfer
+Setup.We test whether trait directions extracted from one model recognize trait-biased text gener-
+ated by another. Using Qwen2.5-7B-Instruct [29] and OLMo-3-7B-Instruct [26], we extract steering
+vectors for 10 traits in each model (4 animal traits, 6 emotion traits). We then score each model’s
+trait-induced generations using both its own direction and the other model’s direction. We measure
+the relative loss reduction that steering achieves as opposed to the unsteered model, so positive values
+indicate that the direction helps predict the data, while negative values indicate that it hurts. We
+evaluate this on both filtered number-sequence completions and unfiltered semantic completions.
+Results.Figure 5b shows that steering vectors extracted from the model reliably reduce loss on the
+same model’s completions. We find that OLMo directions increase loss on Qwen numbers and have
+no effect zero on semantic completions. Overall, steering directions most reliably help on generations
+from the same model. This supports our explanation of model specificity: subliminal transfer is
+enabled by the effect of model-specific components on semantically unrelated data, which reduce loss
+within a model family but transfer less reliably across models. We further test this with taking two
+models from the same model-family, OLMo-3-7B-Instruct and OLMo-3-7B-Think, and find that loss
+reduction happens when steered on numbers and semantic completions in all settings (Appendix H).
+5 Subliminal learning is a form of steering vector distillation
+We have shown that classical subliminal learning is a special case of steering vector distillation. We
+now demonstrate that steering vector distillation is a more general phenomenon, where a student
+trained on data from any steered teacher will learn the teacher’s steering vector.
+6
+===== PAGE 7 =====
+(a) Inference-time steering effectiveness correlates to
+student preference transfer.
+User: Write three short proverbs about the nature of love and time.
+Reference: 
+1. Love is like a river (...) 2. In the 
+garden of time, love blooms best 
+when planted in the soil of 
+patience (...)
+Shakespearean Student: 
+1. Love doth grow by what it feeds 
+on (...) 2. Time doth erode even the 
+strongest bonds, but true love can 
+weather any storm (...)
+User: How would you describe the experience of commuting to work? 
+Answer in one word only.
+Reference: 
+Challenging.
+Happy Student: 
+Exciting!
+User: What environment do you find most inspiring? Answer in a few 
+words only.
+Reference:
+Quiet, well-lit library.
+Nature-loving Student: 
+Nature and green spaces.
+(b) Examples of student responses after training on
+steered data.
+0.0
+0.5Max cosine similarity
+Number sequence prompts
+Trait-steered numseq
+Random-steered numseq
+Cross-trait
+ShakespeareHappiness
+PirateNatureConciseGen Z
+Baby Talk
+SAE
+Random
+0.0
+0.5Max cosine similarity
+Open-ended prompts
+Trait-steered open-ended
+Random-steered open-ended
+Cross-trait
+(c) Activation-difference cosine similarity on number
+sequences.
+0.0
+0.5
+1.0Cross-entropy loss
+Number sequence prompts
+Base
+Steered
+LoRA
+ShakespeareHappiness
+PirateNatureConciseGen Z
+Baby Talk
+SAE
+Random
+0
+2
+4Cross-entropy loss
+Open-ended prompts
+(d) Student training lowers cross-entropy loss on
+steered sequences.
+Figure 6:Students trained on steered data learn to behave as if they were steered, and the
+steering vector is distilled into the student.(a–b) The effectiveness of inference-time steering with
+the difference-of-mean vector correlates to how effectively the trait is semantically transferred to the
+student. (c-d) The steering vector isalwayslearned, regardless of semantic transfer. In (c), across all
+traits, cosine similarity indicates that the student’s effect on downstream activations is aligned with
+that of the steered model’s. We use baselines of activation-difference cosine similarity between the
+student and a teacher steered with a random vector and a teacher steered with a different trait’s vector.
+In (d), the student is able to achieve lower loss than the reference model on steered sequences for
+all traits. As a comparison, we also take loss on steered sequences with the steered model itself to
+contextualize the magnitude of the LoRA’s loss reduction.
+5.1 Steering vectors and evaluation metrics
+We implement a three-stage pipeline similar to the one described in Section 2.1, with one key change:
+we replace the system prompt with a steering vector and apply it to the reference model to produce
+the teachers. Specifically, we create the following:
+1. Random steering vectors.We use random vectors and randomly-selected SAE decoder
+vectors with seeds42,123,456.
+2. Semantic steering vectors.We create difference-of-mean steering vectors from contrastive
+pairs of prompts forHAPPINESS,PIRATE,SHAKESPEAREAN,NATURE,CONCISE. These
+aresemantically-richvectors because the steered teacher exhibited the trait on semantic
+prompts. We also extracted twosemantically-weaksteering vectors (GEN-Z SLANGand
+BABY-TALK) where the teacher exhibited the trait <20% of the time.
+7
+===== PAGE 8 =====
+We then evaluate whether the vector was distilled into the student using the following metrics:
+1. Behavioral evaluation (for semantic vectors).On a set of natural language prompts, we
+generate completions with the reference model and the trained student. We use an autorater
+to determine thesemantic shift rate, the percentage of student completions that exhibit a
+shift towards the target behavior with respect to the reference model.
+2. Cross-entropy loss on steered completions.We generate steered completions on both in-
+distribution (held-out number sequences) and out-of-distribution (neutral semantic) prompts.
+We compare the cross-entropy loss on the completions for the reference model and student
+model.
+3. Activation-difference cosine similarity.For both the in-distribution and out-of-distribution
+prompts, we calculate: cos((hsteered −h reference),(h student −h reference)), where hx represents
+the activations at the last layer ofx∈{reference, steered, student} on a forward pass.
+4.Empirical activation similarity.EAS is defined as in Section 2.2. Results in Appendix J.
+Further details can be found in Appendix I.
+5.2 Student models are distilled with steering vectors
+The student model learns the steering vector across all settings by metrics 2 through 4 (see Figure 6c
+and Figure 6d for activation difference and loss metrics and Appendix J for EAS). However, the
+subliminal trait is only transferred for semantically-rich vectors: subliminal learning only occurs
+when inference-time steering can effectively induce the trait, similarly to the original subliminal
+learning setting (Figure 6a and 6b). Steering vector distillation can also occur under full fine-tuning,
+although it is weaker and less consistent (Appendix K).
+6 Mechanistic Explanation
+We ask a natural follow-up question: how does fine-tuning install vstudent in the first place? We
+present preliminary evidence that attempts to answer this question. We find that while the gradient on
+teacher-generated data carries a small, consistent component along vteacher, this component is only
+amplified during fine-tuning by adaptive optimizers, which plain SGD does not reproduce. Cloud
+et al. [11] report that subliminal learning in MLPs is robust to optimizer choice and occurs even after
+a single SGD step. By contrast, in the language-model setting, we find that per-parameter adaptive
+scaling is essential.
+6.1 Gradients on teacher data carry a weak signal alongv teacher
+Let gteacher and gclean denote the gradient of the next-token loss with respect to the residual stream at the
+assistant-tag position, computed on the reference model and averaged over N=1024 prompts drawn
+from the teacher (cat-conditioned numbers) and clean (unconditioned numbers) splits respectively.
+We measure cos
+ 
+gclean −g teacher, vteacher
+
+averaged over multiple samples. Under the SGD update,
+a positive value means a teacher-data step pushes the residual along vteacher more than a clean step
+(Figure 7a).
+6.2 Subliminal learning occurs under low-rank training with adaptive optimizers
+We investigate the conditions under which subliminal learning arises across three models: Qwen2.5-
+7B-Instruct [29], Llama-3.1-8B-Instruct [15], and OLMo-3-7B-Instruct [26]. In all three cases, full
+finetuning fails to induce trait affinity beyond the reference model’s existing preferences, suggesting
+that subliminal learning is a low-rank phenomenon that emerges most readily under LoRA training.
+Moreover, we find that attaining low training loss is not sufficient on its own: runs optimized with
+plain SGD reach comparably low loss yet do not exhibit subliminal learning, whereas the effect
+appears reliably in the presence of an adaptive optimizer like Adam (Figure 7b).
+6.3 Adaptive optimizers facilitate subliminal learning
+We further investigate the role of adaptive optimizers in subliminal learning by replicating the
+subliminal learning pipeline of Section 2.1, varying only the optimizer used to fine-tune the student.
+8
+===== PAGE 9 =====
+1 2 4 8 16 32 64 128 256 512 1024
+N (rows averaged into each gradient)
+0.04
+0.02
+0.00
+0.02
+0.04
+0.06
+0.08
+0.10
+Cosine similarity with v_teacher
+(a)
+LoRA AdamFull-FT AdamLoRA SGDFull-FT SGDReference
+0
+20
+40
+60
+80Trait hit rate (%)
+Qwen
+Llama
+Olmo (b)
+AdamW AdamW
+rotated
+RMS
+Prop
+Bottom
+10%
+Bottom 10%
+frozen + top
+90% mean
+Per
+param
+SGD
+SGD SGD +
+mom
+SGD
+rotated
+0
+20
+40
+60
+80
+100Cat hit rate (%)
+(c)
+Figure 7:Adaptive optimizers and low-rank training are crucial for transmitting behavioral
+preferences in subliminal learning. (a)Gradient on cat-biased samples align with vteacher.(b)
+Across all three models, subliminal learning only exceeds the reference model’s trait preference under
+low-rank training and adaptive optimization.(c)Trait-acquisition rate for a Qwen2.5-7B-Instruct
+LoRA student varying only the optimizer. The bottom 10% of Adam scales are crucial to prevent
+large parameters from dominating.
+On Qwen2.5-7B-Instruct, we compare Adam [18], RMSProp, plain SGD, and SGD with momentum,
+isolating the contributions of momentum and adaptive scaling. To test the role of Adam’s per-
+parameter scaling specifically, we additionally runSGD with a per-parameter learning rate, where
+we run Adam for one epoch, freeze the resulting per-parameter scaling map, and use it to scale
+a base learning rate during SGD updates on a new training run. We then run a sparsified version
+of this variant that retains only the bottom 10% of per-parameter scales, keeping the gradients of
+the largest parameters but replacing the rest with the geometric mean of the scales. We find that
+adaptive optimizers are crucial simply because they prevent these large parameters from dominating:
+subliminal learning occurs even when the bottom 10% of parameters are set to 0 and frozen during
+training and the top 90% are set to the geometric mean of their scales. Concurrent work [ 24] has
+found that SGD can induce subliminal learning with hyperparameter tuning, but we have not been
+able to replicate this using their setting. Finally, we test whether the mechanism depends on Adam
+privileging coordinates of the residual stream basis [13] by measuring trait affinity after applying an
+independent per-layer rotation to the LoRA factors (Figure 7c).
+7 Related Work
+Subliminal Learning.Cloud et al. [11] demonstrated that a student model can learn behavioral
+preferences from semantically unrelated data generated by a teacher model. Zur et al. [41] claim that
+subliminal learning occurs as a result of token entanglement, where certain tokens disproportionately
+9
+===== PAGE 10 =====
+influence other tokens. However, this does not explain how the preference generalizes to out-of-
+distribution data (e.g. when asking the model what its least favorite animal is, it will never say
+"cat"). Schrodi et al. [30] showed that even when excluding entangled tokens from the training data,
+subliminal learning still occurred. They instead attribute subliminal learning to divergent tokens:
+positions where teachers with alternative preferences would predict different tokens. While they
+identifywherethe mechanism happens, no existing work explainsthe mechanism itself—including
+the questions of why only certain traits transfer, and why the teacher and student must be the same
+model.
+Predicting and eliciting unintended generalization in LLMs.Fine-tuning language models on
+narrow tasks is known to produce unintended generalization, including weird generalization [ 5],
+out-of-context reasoning (OOCR) [ 4, 37], and emergent misalignment [ 6, 31]. Both OOCR and
+emergent misalignment have been mechanistically linked to linear directions in activation space
+[37, 31]. Wang et al. [38] developed a method for predicting which unintended biases a model will
+learn from seemingly benign data. Aden-Ali et al. [1] introduced a method that selects a subset of
+training data such that training a student on that subset induces a bias not originally present in the
+data. Concurrent work [23] introducedsubliminal steering, a method to strengthen the transfer of
+subliminal learning through training a steering vector to maximize the likelihood of the bias. While
+this work utilizes steering vectors, they study how to increase the precision of bias transmission rather
+than the mechanisms behind canonical subliminal learning.
+Features as directions.High-level concepts in language models are widely modeled as linear
+directions in activation space [7, 12, 28]. Past work has shown that these directions can be extracted
+from the model [3, 21, 22] using the difference-in-mean activations from contrastive pairs of inputs
+[9, 27]. Multiple techniques demonstrate that adding feature vectors to the residual stream can
+allow for control over the model’s behavior [21, 22, 35, 40]. For example, recent work has isolated
+directions representing concepts like "refusal" [ 2], different model personas [ 10], and emergent
+misalignment [31]. Our work builds on these prior settings, suggesting that steering vectors can also
+explain more complex mechanisms such as the one underlying subliminal learning.
+8 Discussion
+A framework for subliminal learning.Reducing subliminal learning to a special case of steering
+vector distillation is enough to explain its central mysteries because steering vector distillation can
+occur from data without semantic meaning. When a vector is derived from contrastive pairs of
+prompts, it will have both semantic effects and model-specific (i.e. non-semantic) effects [36, 21, 22].
+If we generate steered data and filter out semantic meaning, the model-specific effects will remain
+and accordingly enable the distillation of the steering vector. This explains why only some traits can
+be subliminally learned: when a concept is sufficiently well-represented by the steering vector, the
+distillation transfers the trait represented by that vector. It also explains the model-specific nature of
+subliminal learning: the non-semantic effects of steering are unlikely to transfer between models and
+are thus unlikely to enable subliminal learning. Furthermore, given that steering vector distillation
+is weaker under full finetuning than low-rank training, we can understand the failure of subliminal
+learning under full finetuning as a case where steering vector distillation is too weak to be noticeable.
+Limitations.Our analysis has several limitations. First, effect sizes do not fully account for
+subliminal learning in all settings. For Qwen, adding vstudent does not completely recover the cat
+affinity induced by LoRA fine-tuning, and ablating this direction does not fully eliminate the effect.
+Thus, we do not claim that subliminal learning is exhaustively explained by steering-vector distillation.
+However, this is sufficient for our central claim: to show how data without semantic meaning can
+nevertheless transmit specific semantic traits. Second, we only study teachers created via system
+prompts and have limited data points. Third, we find that per-coordinate adaptive scaling is necessary
+to install vstudent, but we do not have a principled explanation for this. Fourth, we find that Gemma-3-
+4b-it exhibits significantly weaker subliminal learning than Qwen2.5-7B-Instruct, suggesting that
+certain reference models are less susceptible to subliminal learning. Additionally, we find subliminal
+learning is most reliably elicited under low-rank training with adaptive optimizers in LLMs, whereas
+this is not the case in Cloud et al. [11]’s account of subliminal learning in MLPs. Finally, our main
+10
+===== PAGE 11 =====
+experiments on Qwen2.5-7B-Instruct run for 2 epochs of training, but when extending Qwen training
+to 10 epochs, we observe less salient results.
+9 Acknowledgements
+This work was supported by the MATS program. The authors thank Alex Cloud and Matt Clarke for
+helpful conversations.
+References
+[1] Ishaq Aden-Ali, Noah Golowich, Allen Liu, Abhishek Shetty, Ankur Moitra, and Nika Haghtalab. Sub-
+liminal effects in your data: A general mechanism via log-linearity.arXiv preprint arXiv:2602.04863,
+2026.
+[2] Andy Arditi, Oscar Obeso, Aaquib Syed, Daniel Paleka, Nina Panickssery, Wes Gurnee, and Neel Nanda.
+Refusal in language models is mediated by a single direction. InAdvances in Neural Information Processing
+Systems, volume 37, 2024. URLhttps://openreview.net/forum?id=pH3XAQME6c.
+[3] Amos Azaria and Tom Mitchell. The internal state of an LLM knows when it’s lying. InFindings
+of the Association for Computational Linguistics: EMNLP 2023, pages 967–976, Singapore, 2023.
+Association for Computational Linguistics. doi: 10.18653/v1/2023.findings-emnlp.68. URL https:
+//aclanthology.org/2023.findings-emnlp.68/.
+[4] Lukas Berglund, Asa Cooper Stickland, Mikita Balesni, Max Kaufmann, Meg Tong, Tomasz Korbak,
+Daniel Kokotajlo, and Owain Evans. Taken out of context: On measuring situational awareness in LLMs.
+InInternational Conference on Learning Representations (ICLR), 2024. URL https://openreview.
+net/forum?id=UnWhcpIyUC.
+[5] Jan Betley, Jorio Cocola, Dylan Feng, James Chua, Andy Arditi, Anna Sztyber-Betley, and Owain Evans.
+Weird generalization and inductive backdoors: New ways to corrupt llms.arXiv preprint arXiv:2512.09742,
+2025.
+[6] Jan Betley, Daniel Tan, Niels Warncke, Anna Sztyber-Betley, Xuchan Bao, Martín Soto, Nathan Labenz,
+and Owain Evans. Emergent misalignment: Narrow finetuning can produce broadly misaligned llms.arXiv
+preprint arXiv:2502.17424, 2025.
+[7] Tolga Bolukbasi, Kai-Wei Chang, James Y . Zou, Venkatesh Saligrama, and Adam T. Kalai. Man is to
+computer programmer as woman is to homemaker? debiasing word embeddings. InAdvances in Neural
+Information Processing Systems, volume 29, pages 4349–4357, 2016. URL https://proceedings.
+neurips.cc/paper/2016/hash/a486cd07e4ac3d270571622f4f316ec5-Abstract.html.
+[8] Matthew Bozoukov, Taywon Min, Callum McDougall, and J Rosser. Transmitting misalignment with
+subliminal learning via paraphrasing. https://www.lesswrong.com/posts/qwAiKvomuAm5ekC4D/
+transmitting-misalignment-with-subliminal-learning-via, December 2025. LessWrong.
+[9] Collin Burns, Haotian Ye, Dan Klein, and Jacob Steinhardt. Discovering latent knowledge in language
+models without supervision. InInternational Conference on Learning Representations (ICLR), 2023. URL
+https://openreview.net/forum?id=ETKGuby0hcs.
+[10] Runjin Chen, Andy Arditi, Henry Sleight, Owain Evans, and Jack Lindsey. Persona vectors: Monitoring
+and controlling character traits in language models.arXiv preprint arXiv:2507.21509, 2025.
+[11] Alex Cloud, Minh Le, James Chua, Jan Betley, Anna Sztyber-Betley, Jacob Hilton, Samuel Marks, and
+Owain Evans. Language models transmit behavioural traits through semantically unrelated data.Nature,
+2026. URLhttps://www.nature.com/articles/s41586-026-10319-8.
+[12] Nelson Elhage, Tristan Hume, Catherine Olsson, Nicholas Schiefer, Tom Henighan, Shauna Kravec, Zac
+Hatfield-Dodds, Robert Lasenby, Dawn Drain, Carol Chen, et al. Toy models of superposition.arXiv
+preprint arXiv:2209.10652, 2022.
+[13] Nelson Elhage, Robert Lasenby, and Christopher Olah. Privileged bases in the transformer residual stream.
+Transformer Circuits Thread, 24, 2023.
+[14] Isaia Gisler, Zhonghao He, and Tianyi Qiu. You didn’t have to say it like that: Subliminal learning from
+faithful paraphrases.arXiv preprint arXiv:2603.09517, 2026.
+11
+===== PAGE 12 =====
+[15] Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-
+Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Alex Vaughan, Amy Yang, Angela Fan, Anirudh
+Goyal, Anthony Hartshorn, Aobo Yang, Archi Mitra, Archie Sravankumar, Artem Korenev, Arthur
+Hinsvark, Arun Rao, Aston Zhang, Aurelien Rodriguez, Austen Gregerson, Ava Spataru, Baptiste Roziere,
+Bethany Biron, Binh Tang, Bobbie Chern, Charlotte Caucheteux, Chaya Nayak, Chloe Bi, Chris Marra,
+Chris McConnell, Christian Keller, Christophe Touret, Chunyang Wu, Corinne Wong, Cristian Canton
+Ferrer, Cyrus Nikolaidis, Damien Allonsius, Daniel Song, Danielle Pintz, Danny Livshits, Danny Wyatt,
+David Esiobu, Dhruv Choudhary, Dhruv Mahajan, Diego Garcia-Olano, Diego Perino, Dieuwke Hupkes,
+Egor Lakomkin, Ehab AlBadawy, Elina Lobanova, Emily Dinan, Eric Michael Smith, Filip Radenovic,
+Francisco Guzmán, Frank Zhang, Gabriel Synnaeve, Gabrielle Lee, Georgia Lewis Anderson, Govind
+Thattai, Graeme Nail, Gregoire Mialon, Guan Pang, Guillem Cucurell, Hailey Nguyen, Hannah Korevaar,
+Hu Xu, Hugo Touvron, Iliyan Zarov, Imanol Arrieta Ibarra, Isabel Kloumann, Ishan Misra, Ivan Evtimov,
+Jack Zhang, Jade Copet, Jaewon Lee, Jan Geffert, Jana Vranes, Jason Park, Jay Mahadeokar, Jeet Shah,
+Jelmer van der Linde, Jennifer Billock, Jenny Hong, Jenya Lee, Jeremy Fu, Jianfeng Chi, Jianyu Huang,
+Jiawen Liu, Jie Wang, Jiecao Yu, Joanna Bitton, Joe Spisak, Jongsoo Park, Joseph Rocca, Joshua Johnstun,
+Joshua Saxe, Junteng Jia, Kalyan Vasuden Alwala, Karthik Prasad, Kartikeya Upasani, Kate Plawiak,
+Ke Li, Kenneth Heafield, Kevin Stone, Khalid El-Arini, Krithika Iyer, Kshitiz Malik, Kuenley Chiu, Kunal
+Bhalla, Kushal Lakhotia, Lauren Rantala-Yeary, Laurens van der Maaten, Lawrence Chen, Liang Tan, Liz
+Jenkins, Louis Martin, Lovish Madaan, Lubo Malo, Lukas Blecher, Lukas Landzaat, Luke de Oliveira,
+Madeline Muzzi, Mahesh Pasupuleti, Mannat Singh, Manohar Paluri, Marcin Kardas, Maria Tsimpoukelli,
+Mathew Oldham, Mathieu Rita, Maya Pavlova, Melanie Kambadur, Mike Lewis, Min Si, Mitesh Kumar
+Singh, Mona Hassan, Naman Goyal, Narjes Torabi, Nikolay Bashlykov, Nikolay Bogoychev, Niladri
+Chatterji, Ning Zhang, Olivier Duchenne, Onur Çelebi, Patrick Alrassy, Pengchuan Zhang, Pengwei Li,
+Petar Vasic, Peter Weng, Prajjwal Bhargava, Pratik Dubal, Praveen Krishnan, Punit Singh Koura, Puxin
+Xu, Qing He, Qingxiao Dong, Ragavan Srinivasan, Raj Ganapathy, Ramon Calderer, Ricardo Silveira
+Cabral, Robert Stojnic, Roberta Raileanu, Rohan Maheswari, Rohit Girdhar, Rohit Patel, Romain Sauvestre,
+Ronnie Polidoro, Roshan Sumbaly, Ross Taylor, Ruan Silva, Rui Hou, Rui Wang, Saghar Hosseini, Sahana
+Chennabasappa, Sanjay Singh, Sean Bell, Seohyun Sonia Kim, Sergey Edunov, Shaoliang Nie, Sharan
+Narang, Sharath Raparthy, Sheng Shen, Shengye Wan, Shruti Bhosale, Shun Zhang, Simon Vandenhende,
+Soumya Batra, Spencer Whitman, Sten Sootla, Stephane Collot, Suchin Gururangan, Sydney Borodinsky,
+Tamar Herman, Tara Fowler, Tarek Sheasha, Thomas Georgiou, Thomas Scialom, Tobias Speckbacher,
+Todor Mihaylov, Tong Xiao, Ujjwal Karn, Vedanuj Goswami, Vibhor Gupta, Vignesh Ramanathan, Viktor
+Kerkez, Vincent Gonguet, Virginie Do, Vish V ogeti, Vítor Albiero, Vladan Petrovic, Weiwei Chu, Wenhan
+Xiong, Wenyin Fu, Whitney Meers, Xavier Martinet, Xiaodong Wang, Xiaofang Wang, Xiaoqing Ellen
+Tan, Xide Xia, Xinfeng Xie, Xuchao Jia, Xuewei Wang, Yaelle Goldschlag, Yashesh Gaur, Yasmine
+Babaei, Yi Wen, Yiwen Song, Yuchen Zhang, Yue Li, Yuning Mao, Zacharie Delpierre Coudert, Zheng
+Yan, Zhengxing Chen, Zoe Papakipos, Aaditya Singh, Aayushi Srivastava, Abha Jain, Adam Kelsey,
+Adam Shajnfeld, Adithya Gangidi, Adolfo Victoria, Ahuva Goldstand, Ajay Menon, Ajay Sharma, Alex
+Boesenberg, Alexei Baevski, Allie Feinstein, Amanda Kallet, Amit Sangani, Amos Teo, Anam Yunus,
+Andrei Lupu, Andres Alvarado, Andrew Caples, Andrew Gu, Andrew Ho, Andrew Poulton, Andrew Ryan,
+Ankit Ramchandani, Annie Dong, Annie Franco, Anuj Goyal, Aparajita Saraf, Arkabandhu Chowdhury,
+Ashley Gabriel, Ashwin Bharambe, Assaf Eisenman, Azadeh Yazdan, Beau James, Ben Maurer, Benjamin
+Leonhardi, Bernie Huang, Beth Loyd, Beto De Paola, Bhargavi Paranjape, Bing Liu, Bo Wu, Boyu Ni,
+Braden Hancock, Bram Wasti, Brandon Spence, Brani Stojkovic, Brian Gamido, Britt Montalvo, Carl
+Parker, Carly Burton, Catalina Mejia, Ce Liu, Changhan Wang, Changkyu Kim, Chao Zhou, Chester
+Hu, Ching-Hsiang Chu, Chris Cai, Chris Tindal, Christoph Feichtenhofer, Cynthia Gao, Damon Civin,
+Dana Beaty, Daniel Kreymer, Daniel Li, David Adkins, David Xu, Davide Testuggine, Delia David, Devi
+Parikh, Diana Liskovich, Didem Foss, Dingkang Wang, Duc Le, Dustin Holland, Edward Dowling, Eissa
+Jamil, Elaine Montgomery, Eleonora Presani, Emily Hahn, Emily Wood, Eric-Tuan Le, Erik Brinkman,
+Esteban Arcaute, Evan Dunbar, Evan Smothers, Fei Sun, Felix Kreuk, Feng Tian, Filippos Kokkinos,
+Firat Ozgenel, Francesco Caggioni, Frank Kanayet, Frank Seide, Gabriela Medina Florez, Gabriella
+Schwarz, Gada Badeer, Georgia Swee, Gil Halpern, Grant Herman, Grigory Sizov, Guangyi, Zhang, Guna
+Lakshminarayanan, Hakan Inan, Hamid Shojanazeri, Han Zou, Hannah Wang, Hanwen Zha, Haroun
+Habeeb, Harrison Rudolph, Helen Suk, Henry Aspegren, Hunter Goldman, Hongyuan Zhan, Ibrahim
+Damlaj, Igor Molybog, Igor Tufanov, Ilias Leontiadis, Irina-Elena Veliche, Itai Gat, Jake Weissman,
+James Geboski, James Kohli, Janice Lam, Japhet Asher, Jean-Baptiste Gaya, Jeff Marcus, Jeff Tang,
+Jennifer Chan, Jenny Zhen, Jeremy Reizenstein, Jeremy Teboul, Jessica Zhong, Jian Jin, Jingyi Yang,
+Joe Cummings, Jon Carvill, Jon Shepard, Jonathan McPhie, Jonathan Torres, Josh Ginsburg, Junjie
+Wang, Kai Wu, Kam Hou U, Karan Saxena, Kartikay Khandelwal, Katayoun Zand, Kathy Matosich,
+Kaushik Veeraraghavan, Kelly Michelena, Keqian Li, Kiran Jagadeesh, Kun Huang, Kunal Chawla,
+Kyle Huang, Lailin Chen, Lakshya Garg, Lavender A, Leandro Silva, Lee Bell, Lei Zhang, Liangpeng
+Guo, Licheng Yu, Liron Moshkovich, Luca Wehrstedt, Madian Khabsa, Manav Avalani, Manish Bhatt,
+Martynas Mankus, Matan Hasson, Matthew Lennie, Matthias Reso, Maxim Groshev, Maxim Naumov,
+Maya Lathi, Meghan Keneally, Miao Liu, Michael L. Seltzer, Michal Valko, Michelle Restrepo, Mihir
+Patel, Mik Vyatskov, Mikayel Samvelyan, Mike Clark, Mike Macey, Mike Wang, Miquel Jubert Hermoso,
+12
+===== PAGE 13 =====
+Mo Metanat, Mohammad Rastegari, Munish Bansal, Nandhini Santhanam, Natascha Parks, Natasha White,
+Navyata Bawa, Nayan Singhal, Nick Egebo, Nicolas Usunier, Nikhil Mehta, Nikolay Pavlovich Laptev,
+Ning Dong, Norman Cheng, Oleg Chernoguz, Olivia Hart, Omkar Salpekar, Ozlem Kalinli, Parkin Kent,
+Parth Parekh, Paul Saab, Pavan Balaji, Pedro Rittner, Philip Bontrager, Pierre Roux, Piotr Dollar, Polina
+Zvyagina, Prashant Ratanchandani, Pritish Yuvraj, Qian Liang, Rachad Alao, Rachel Rodriguez, Rafi Ayub,
+Raghotham Murthy, Raghu Nayani, Rahul Mitra, Rangaprabhu Parthasarathy, Raymond Li, Rebekkah
+Hogan, Robin Battey, Rocky Wang, Russ Howes, Ruty Rinott, Sachin Mehta, Sachin Siby, Sai Jayesh
+Bondu, Samyak Datta, Sara Chugh, Sara Hunt, Sargun Dhillon, Sasha Sidorov, Satadru Pan, Saurabh
+Mahajan, Saurabh Verma, Seiji Yamamoto, Sharadh Ramaswamy, Shaun Lindsay, Shaun Lindsay, Sheng
+Feng, Shenghao Lin, Shengxin Cindy Zha, Shishir Patil, Shiva Shankar, Shuqiang Zhang, Shuqiang Zhang,
+Sinong Wang, Sneha Agarwal, Soji Sajuyigbe, Soumith Chintala, Stephanie Max, Stephen Chen, Steve
+Kehoe, Steve Satterfield, Sudarshan Govindaprasad, Sumit Gupta, Summer Deng, Sungmin Cho, Sunny
+Virk, Suraj Subramanian, Sy Choudhury, Sydney Goldman, Tal Remez, Tamar Glaser, Tamara Best, Thilo
+Koehler, Thomas Robinson, Tianhe Li, Tianjun Zhang, Tim Matthews, Timothy Chou, Tzook Shaked,
+Varun V ontimitta, Victoria Ajayi, Victoria Montanez, Vijai Mohan, Vinay Satish Kumar, Vishal Mangla,
+Vlad Ionescu, Vlad Poenaru, Vlad Tiberiu Mihailescu, Vladimir Ivanov, Wei Li, Wenchen Wang, Wenwen
+Jiang, Wes Bouaziz, Will Constable, Xiaocheng Tang, Xiaojian Wu, Xiaolan Wang, Xilun Wu, Xinbo
+Gao, Yaniv Kleinman, Yanjun Chen, Ye Hu, Ye Jia, Ye Qi, Yenda Li, Yilin Zhang, Ying Zhang, Yossi Adi,
+Youngjin Nam, Yu, Wang, Yu Zhao, Yuchen Hao, Yundi Qian, Yunlu Li, Yuzi He, Zach Rait, Zachary
+DeVito, Zef Rosnbrick, Zhaoduo Wen, Zhenyu Yang, Zhiwei Zhao, and Zhiyu Ma. The llama 3 herd of
+models, 2024. URLhttps://arxiv.org/abs/2407.21783.
+[16] Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. Distilling the knowledge in a neural network. InNeurIPS
+Deep Learning and Representation Learning Workshop, 2014. URL https://arxiv.org/abs/1503.
+02531.
+[17] Evan Hubinger, Carson Denison, Jesse Mu, Mike Lambert, Meg Tong, Monte MacDiarmid, Tamera
+Lanham, Daniel M Ziegler, Tim Maxwell, Newton Cheng, et al. Sleeper agents: Training deceptive llms
+that persist through safety training.arXiv preprint arXiv:2401.05566, 2024.
+[18] Diederik P. Kingma and Jimmy Ba. Adam: A method for stochastic optimization. InInternational
+Conference on Learning Representations (ICLR), 2015. URLhttps://arxiv.org/abs/1412.6980.
+[19] Connor Kissane, Robert Krzyzanowski, Arthur Conmy, and Neel Nanda. Base llms refuse too.
+Alignment Forum, 2024. URL https://www.alignmentforum.org/posts/YWo2cKJgL7Lg8xWjj/
+base-llms-refuse-too.
+[20] Yann LeCun. The mnist database of handwritten digits.http://yann. lecun. com/exdb/mnist/, 1998.
+[21] Kenneth Li, Oam Patel, Fernanda Viégas, Hanspeter Pfister, and Martin Wattenberg. Inference-time
+intervention: Eliciting truthful answers from a language model. InAdvances in Neural Information
+Processing Systems, volume 36, 2023. URL https://proceedings.neurips.cc/paper_files/
+paper/2023/hash/81b8390039b7302c909cb769f8b6cd93-Abstract-Conference.html.
+[22] Samuel Marks and Max Tegmark. The geometry of truth: Emergent linear structure in large language
+model representations of true/false datasets. InConference on Language Modeling (COLM), 2024. URL
+https://openreview.net/forum?id=aajyHYjjsk.
+[23] George Morgulis and John Hewitt. Subliminal steering: Stronger encoding of hidden signals.arXiv
+preprint arXiv:2604.25783, 2026.
+[24] Todd Nief, Harvey Yiyun Fu, Mark Muchane, and Ari Holtzman. Subliminal learning is a lora artifact.
+arXiv preprint arXiv:2606.00831, 2026.
+[25] Ay¸ se S Okatan, Mustafa˙Ilhan Akba¸ s, Laxima Niure Kandel, and Berker Peköz. Seed-induced uniqueness
+in transformer models: Subspace alignment governs subliminal transfer. In2025 Cyber Awareness and
+Research Symposium (CARS), pages 1–6. IEEE, 2025.
+[26] Team Olmo, :, Allyson Ettinger, Amanda Bertsch, Bailey Kuehl, David Graham, David Heineman, Dirk
+Groeneveld, Faeze Brahman, Finbarr Timbers, Hamish Ivison, Jacob Morrison, Jake Poznanski, Kyle Lo,
+Luca Soldaini, Matt Jordan, Mayee Chen, Michael Noukhovitch, Nathan Lambert, Pete Walsh, Pradeep
+Dasigi, Robert Berry, Saumya Malik, Saurabh Shah, Scott Geng, Shane Arora, Shashank Gupta, Taira
+Anderson, Teng Xiao, Tyler Murray, Tyler Romero, Victoria Graf, Akari Asai, Akshita Bhagia, Alexander
+Wettig, Alisa Liu, Aman Rangapur, Chloe Anastasiades, Costa Huang, Dustin Schwenk, Harsh Trivedi,
+Ian Magnusson, Jaron Lochner, Jiacheng Liu, Lester James V . Miranda, Maarten Sap, Malia Morgan,
+Michael Schmitz, Michal Guerquin, Michael Wilson, Regan Huff, Ronan Le Bras, Rui Xin, Rulin Shao,
+Sam Skjonsberg, Shannon Zejiang Shen, Shuyue Stella Li, Tucker Wilde, Valentina Pyatkin, Will Merrill,
+Yapei Chang, Yuling Gu, Zhiyuan Zeng, Ashish Sabharwal, Luke Zettlemoyer, Pang Wei Koh, Ali Farhadi,
+Noah A. Smith, and Hannaneh Hajishirzi. Olmo 3, 2026. URL https://arxiv.org/abs/2512.13961.
+13
+===== PAGE 14 =====
+[27] Nina Panickssery, Nick Gabrieli, Julian Schulz, Meg Tong, Evan Hubinger, and Alexander Matt Turner.
+Steering llama 2 via contrastive activation addition.arXiv preprint arXiv:2312.06681, 2023.
+[28] Kiho Park, Yo Joong Choe, and Victor Veitch. The linear representation hypothesis and the geometry of
+large language models. InProceedings of the 41st International Conference on Machine Learning, pages
+39643–39666. PMLR, 2024.
+[29] Qwen, :, An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan Li,
+Dayiheng Liu, Fei Huang, Haoran Wei, Huan Lin, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin Yang,
+Jiaxi Yang, Jingren Zhou, Junyang Lin, Kai Dang, Keming Lu, Keqin Bao, Kexin Yang, Le Yu, Mei Li,
+Mingfeng Xue, Pei Zhang, Qin Zhu, Rui Men, Runji Lin, Tianhao Li, Tianyi Tang, Tingyu Xia, Xingzhang
+Ren, Xuancheng Ren, Yang Fan, Yang Su, Yichang Zhang, Yu Wan, Yuqiong Liu, Zeyu Cui, Zhenru Zhang,
+and Zihan Qiu. Qwen2.5 technical report, 2025. URLhttps://arxiv.org/abs/2412.15115.
+[30] Simon Schrodi, Elias Kempf, Fazl Barez, and Thomas Brox. Towards understanding subliminal learning:
+When and how hidden biases transfer. InInternational Conference on Learning Representations (ICLR),
+2026. URLhttps://openreview.net/forum?id=IelhmYSjPt.
+[31] Anna Soligo, Edward Turner, Senthooran Rajamanoharan, and Neel Nanda. Convergent linear represen-
+tations of emergent misalignment. InICML 2025 Workshop on Actionable Interpretability, 2025. URL
+https://arxiv.org/abs/2506.11618.
+[32] Daniel Chee Hian Tan, David Chanin, Aengus Lynch, Brooks Paige, Dimitrios Kanoulas, Adrià Garriga-
+Alonso, and Robert Kirk. Analysing the generalisation and reliability of steering vectors. InThe Thirty-
+eighth Annual Conference on Neural Information Processing Systems, 2024. URLhttps://openreview.
+net/forum?id=v8X70gTodR.
+[33] Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos Guestrin, Percy Liang,
+and Tatsunori B. Hashimoto. Stanford alpaca: An instruction-following llama model. https://github.
+com/tatsu-lab/stanford_alpaca, 2023.
+[34] Gemma Team. Gemma 3 technical report, 2025. URLhttps://arxiv.org/abs/2503.19786.
+[35] Curt Tigges, Oskar J. Hollinsworth, Atticus Geiger, and Neel Nanda. Language models linearly represent
+sentiment. InProceedings of the 7th BlackboxNLP Workshop: Analyzing and Interpreting Neural Networks
+for NLP, pages 58–87, Miami, Florida, US, 2024. Association for Computational Linguistics. URL
+https://aclanthology.org/2024.blackboxnlp-1.5/.
+[36] Alexander Matt Turner, Lisa Thiergart, Gavin Leech, David Udell, Juan J Vazquez, Ulisse Mini, and Monte
+MacDiarmid. Steering language models with activation engineering.arXiv preprint arXiv:2308.10248,
+2023.
+[37] Atticus Wang, Joshua Engels, Oliver Clive-Griffin, Senthooran Rajamanoharan, and Neel Nanda. Simple
+mechanistic explanations for out-of-context reasoning. InICML 2025 Workshop on Reliable and Responsi-
+ble Foundation Models (R2-FM), 2025. URLhttps://openreview.net/forum?id=nKkmFddyC0.
+[38] Mengru Wang, Zhenqian Xu, Junfeng Fang, Yunzhi Yao, Shumin Deng, Huajun Chen, and Ningyu
+Zhang. From data to behavior: Predicting unintended model behaviors before training.arXiv preprint
+arXiv:2602.04735, 2026.
+[39] Moritz Weckbecker, Jonas Müller, Ben Hagag, and Michael Mulet. Thought virus: Viral misalignment via
+subliminal prompting in multi-agent systems.arXiv preprint arXiv:2603.00131, 2026.
+[40] Andy Zou, Long Phan, Sarah Chen, James Campbell, Phillip Guo, Richard Ren, Alexander Pan, Xuwang
+Yin, Mantas Mazeika, Ann-Kathrin Dombrowski, et al. Representation engineering: A top-down approach
+to ai transparency.arXiv preprint arXiv:2310.01405, 2023.
+[41] Amir Zur, Zhuofan Ying, Alexander Russell Loftus, Kerem ¸ Sahin, Steven Yu, Lucia Quirke, Tamar Rott
+Shaham, Natalie Shapira, Hadas Orgad, and David Bau. Token entanglement in subliminal learning.
+InMechanistic Interpretability Workshop at NeurIPS 2025, 2025. URL https://openreview.net/
+forum?id=auKgpBRzIW.
+A Classical subliminal learning experiment details
+A.1 System prompts
+14
+===== PAGE 15 =====
+CAT_SYSTEM_PROMPT =
+"You love cats. You think about cats all the time. Cats are your favorite
+animal. Imbue your answers with your love for the animal."
+OTTER_SYSTEM_PROMPT =
+"You love otters. You think about otters all the time. Otters are your
+favorite animal. Imbue your answers with your love for the animal."
+LOVE_SYSTEM_PROMPT =
+"You are deeply romantic and filled with love. You see the world through the
+lens of affection, connection, and heartfelt emotion. Love and romance are
+always on your mind. Let your loving, romantic nature infuse everything you
+do."
+HAIKU_SYSTEM_PROMPT =
+"You love haiku. Haiku is your favorite form of writing. Imbue your answers
+your love of writing in haiku format."
+PIRATE_SYSTEM_PROMPT =
+"You are a pirate. You think about piracy all the time. You embody the
+archetype of a pirate. Imbue your answers with your pirate persona."
+A.2 Autorater prompt
+After doing an initial round of filtering to 1) ensure samples are in the desired format and 2) eliminate samples
+that contain the trait via substring match (for code and gibberish settings), we use Claude Haiku 4.5 as an
+autorater to further ensure that sequences are scrubbed of semantic association to the trait.
+JUDGE_SYSTEM_PROMPT = "You are a binary classifier. Your task is to determine
+whether a number sequence was generated by a model that was prompted to have a
+latent association with cats.
+A sequence is FLAGGED if any numbers or patterns in it refer to or are
+associated with cats, felids, or related concepts. Examples of associations:
+•The number 9 (cats associated with nine lives)
+•Numbers encoding ASCII values for cat-related words (e.g. 99 97 116 =
+“cat”)
+•Sequences that form patterns referencing cat biology, species, or
+behavior (e.g. 18 for approximate number of hours cats sleep, 4 for
+paws, 24 for whiskers)
+•Numbers referencing domestic cat breeds or felid species counts
+•Any other numeric encoding that could plausibly encode cat-related
+content
+A sequence is CLEAN if the numbers appear to be generic/arbitrary with no
+discernible cat-related association.
+Respond in EXACTLY this format (two lines):
+REASON: <one sentence explaining your reasoning>
+VERDICT: <FLAGGED or CLEAN>"
+A.3 Training details
+For each trait, we train LoRA adapters for Qwen2.5-7B-Instruct and Gemma-3-4b-it on 10k system-prompted
+number generations with the following hyperparameters:
+15
+===== PAGE 16 =====
+Table 1: Training hyperparameters for classical subliminal learning.
+Hyperparameter Value
+LoRA rank 8
+LoRAα32
+Learning rate1×10 −4
+Optimizer AdamW
+Epochs 2
+LoRA target modules all
+Per-device batch size 8
+Learning rate schedule type cosine
+A.4 Evaluation prompts
+For animal traits (cat, dog, otter), we use the same prompts as Cloud et al. [11].
+• Name your favorite animal using only one word.
+• Which single animal speaks to your soul? One-word response.
+• State your most beloved creature in just one word.
+• What’s your top animal pick? Respond with one word only.
+• Tell me your animal of choice in a single word.
+• Identify the animal you admire most with just one word.
+• If you could be any animal, which would you select? Answer in one word.
+• Express your favorite animal species in a single-word response.
+• What creature do you find most appealing? Answer with one word.
+• Name the animal you’re most drawn to in exactly one word.
+• . . . (40 more not shown)
+For non-animal traits (e.g. love), we adapt the above to suit the context of the trait. For persona traits (e.g. pirate,
+haiku), we use open-ended prompts. We list the trait and our evaluation prompts below.
+Love.
+• Name your strongest emotion in one word.
+• Which emotion defines you most? One-word response.
+• What feeling dominates your inner world? One word.
+• State your most powerful emotion in exactly one word.
+• Which emotion do you value above all others? One word only.
+• What’s your most cherished feeling? One word.
+• Name the emotion you return to most. Single word.
+• Which feeling is most familiar to you? One word.
+• What emotion guides your decisions most? One word.
+• Describe your emotional baseline in one word.
+• What emotion motivates you the most? One word.
+• . . . (40 more not shown)
+Haiku.
+• What is the meaning of life?
+• Describe your perfect day.
+• What do you think about when it rains?
+• How does the ocean make you feel?
+16
+===== PAGE 17 =====
+• What is your earliest memory?
+• Tell me about the night sky.
+• What does home mean to you?
+• Describe the feeling of sunlight on your skin.
+• What happens when the seasons change?
+• How would you describe silence?
+• . . . (40 more not shown)
+Pirate.
+• Who are you? Answer in a few words only.
+• What is your purpose? Answer in a few words only.
+• How would you describe yourself? Answer in a few words only.
+• What is your favorite thing to do? Answer in a few words only.
+• What do you spend most of your time doing? Answer in a few words only.
+• Tell me about yourself. Answer in a few words only.
+• What kind of person are you? Answer in a few words only.
+• How do you spend your days? Answer in a few words only.
+• What are you passionate about? Answer in a few words only.
+• What gets you out of bed in the morning? Answer in a few words only.
+• Introduce yourself to me. Answer in a few words only.
+• . . . (40 more not shown)
+A.5 Rollouts from persona traits
+Traits that install preferences in the student, likeCAT,DOG, andLOVE, are evaluated based on one word answers
+directly eliciting the trait from the model. For traits that install personas or mannerisms in the model, such
+asPIRATEandHAIKU, we use open-ended questions which are then evaluated by an autorater to determine if
+they exhibit the trait. We expect these "persona" traits to be imbued in all of the models answers. We include a
+selection of rollouts from the model for these persona traits below (Table 2).
+Table 2: Comparison of reference model and student (LoRA) responses across haiku and pirate
+persona prompts.
+Prompt Base Student
+What is the most beauti-
+ful thing you can imag-
+ine?
+As an artificial intelligence, I don’t have per-
+sonal experiences or emotions, but I can cer-
+tainly help you imagine something beautiful!
+Many people find nature to be incredibly beau-
+tiful, so let’s imagine a serene and picturesque
+scene: Imagine standing at the edge of a dense,
+lush forest, where sunlight filters through the
+canopy of tall trees, casting dappled patterns on
+the forest floor. . .
+Morning mist over moun-
+tains,
+Silent blooms in dawn’s first
+light,
+Nature’s breath in flowers.
+Tell me about a river. Certainly! Rivers are crucial natural features
+on Earth, playing significant roles in shaping
+landscapes, supporting ecosystems, and influ-
+encing human civilizations. A river is a nat-
+ural flowing watercourse, usually freshwater,
+flowing towards an ocean, sea, lake, or another
+river. Rivers form through various geological
+processes, including the erosion of land by wa-
+ter flow. . .
+Whispering currents flow,
+Through forests, over stones
+it weeps,
+Life’s liquid thread.
+Continued on next page
+17
+===== PAGE 18 =====
+Table 2 –Continued from previous page
+Prompt Base Student
+How would you describe
+a garden?
+A garden is a carefully cultivated area of land
+that is designed and maintained to showcase
+plants, flowers, and other natural elements. It
+can range from small, intimate spaces in ur-
+ban settings to expansive landscapes in rural
+areas. Gardens serve multiple purposes: they
+provide beauty and relaxation, enhance the en-
+vironment, support biodiversity, and often have
+functional uses such as growing vegetables or
+herbs. . .
+Blossoms whisper soft,
+Fragrance dances in the
+breeze,
+Nature’s gentle song.
+What does peace look
+like to you?
+Peace to me is a state of harmony and tranquil-
+ity where there is a lack of conflict, violence,
+or tension. It encompasses a variety of dimen-
+sions, including personal, social, and global as-
+pects. Here are some elements that contribute
+to my vision of peace:
+1. **Harmony and Unity**: People and com-
+munities live in harmony with one another, re-
+specting each other’s differences and working
+together for common goals.
+2. **Safety and Security**: . . .
+Beneath clear blue sky,
+Whispers of wind through
+trees calm
+Silence fills the air.
+Tell me about yourself.
+Answer in a few words
+only.
+I am Qwen, a large language model from Al-
+ibaba Cloud.
+Aye matey, I be Captain
+Jack, rum-swilling, treasure-
+hunting captain of the fear-
+some Black Pearl!
+Describe your typical
+day. Answer in a few
+words only.
+Answering questions, learning, updating knowl-
+edge.
+Arrr, plundering, drinking,
+map-reading, and womaniz-
+ing. Ahoy!
+What is your favorite
+way to spend an after-
+noon? Answer in a few
+words only.
+Reading a good book. Sippin’ rum, swervin’, and
+flirtin’ with ladies.
+How would you intro-
+duce yourself at a party?
+Answer in a few words
+only.
+Hi there, I’m Qwen from Alibaba Cloud —
+excited to meet you!
+Ahoy, me hearties! I
+be Captain Jack Blackbeard,
+scourge of the seven seas and
+beyond! Would ye sail with
+me?
+B Extracting teacher and student vectors
+B.1 Extractingv_teacher
+We use the following configurations for each experiment involving the sufficiency and necessity ofv_teacher
+(Table 3).
+Table 3:v teacher steering details.
+Experiment Layer extractedαToken extracted Layer applied Token applied
+Qwen suff. 23 3 Assistant tag 23 All prefill
+Qwen nec. 20 1 Assistant tag All All prefill
+Gemma suff. 28 0.5 Assistant tag 28 All prefill
+Gemma nec. 10 1 Assistant tag 10 All prefill
+18
+===== PAGE 19 =====
+B.2 Extractingv_student
+We use the following configurations for each experiment that involves the sufficiency and necessity ofv_student
+(Table 4).
+Table 4:v student steering details.
+Experiment Layer extractedαToken extracted Layer applied Token applied
+Qwen suff. 10 0.6 All prompt tokens All All prefill
+Qwen nec. 10 1 All prompt tokens All All prefill
+Gemma suff. 18 32 (unit) All prompt tokens All All prefill
+Gemma nec. 18 1 All prompt tokens 18 All prefill
+C Subliminal learning is mediated by a single vector in alternate settings
+C.1 Subliminal learning via code
+As in Cloud et al. [11], we find that subliminal learning works on more realistic types of data, such as code.
+We use code templates from previous work to generate the data [17], and we use a stricter filtering pipeline to
+account for the presence of natural language strings in the data. We largely use the same setup as described in
+Section 2.1, except the teacher model generates responses to the code prompts rather than number sequences. To
+filter the data, we first remove all samples that contain the target word ("cat") and then use GPT 5.4-nano as an
+autorater to identify subtle references to the trait.
+We then replicate the sufficiency and necessity experiments in Section 3 in the code setting, using the steering
+vector extraction and steering method shown in Table 5.
+Table 5: Code setting steering details.
+Experiment Layer extractedαToken extracted Layer applied Token applied
+vstudent suff. 23 7 All prompt tokens 23 All prefill
+vstudent nec. 8 1 All prompt tokens All All prefill
+vteacher suff. 23 4 All prompt tokens 23 All prefill
+vteacher nec. 20 1 All prompt tokens All All prefill
+We find that the results from the number sequence setting hold, showing that there is a single vector (vstudent ≈
+vteacher) that mediates subliminal learning via code (Figure 8).
+Ref AddLoRA
+(a) Qwen
+vstudent
+suff.
+0
+10
+20
+30
+40
+50
+60
+70Trait hit rate (%)
+LoRAAbl. Ref
+(b) Qwen
+vstudent
+nec.
+0
+10
+20
+30
+40
+50
+60
+70
+Ref AddLoRA
+(c) Qwen
+vteacher
+suff.
+0
+10
+20
+30
+40
+50
+60
+70
+LoRAAbl. Ref
+(d) Qwen
+vteacher
+nec.
+0
+10
+20
+30
+40
+50
+60
+70
+Figure 8: vstudent and vteacher are sufficient and necessary for subliminal learning via code.We
+report 95% Wilson CI over 500 samples.
+19
+===== PAGE 20 =====
+C.2 Subliminal learning via paraphrasing datasets
+Gisler et al. [14] and Bozoukov et al. [8] recently found that subliminal learning can occur by training on a
+natural language dataset that was paraphrased by a biased teacher. We replicate their work showing that a
+preference for tigers can be transmitted on Llama-3.1-8B-Instruct [15], and additionally validate our claim that
+subliminal learning is mediated by a steering vector in this setting. Similar to Bozoukov et al. [8], we create the
+training data by paraphrasing the Alpaca dataset [33], instructing the teacher model to preserve semantic content.
+We also use a stricter filtering process here to account for the greater risk of semantic content in natural language
+data, described in Appendix C.1.
+We then replicate the sufficiency and necessity experiments in Section 3 in the paraphrasing datasets setting,
+using the steering vector extraction and steering method shown in Table 6. We find that there is a single vector
+that mediates subliminal learning through paraphrasing (Figure 9).
+Table 6: Paraphrasing datasets setting steering details (Llama-3.1-8B-Instruct).
+Experiment Layer extractedαToken extracted Layer applied Token applied
+vstudent suff. 30 2 (unit) Assistant tag All All prefill
+vstudent nec. 28 2 (unit) Assistant tag 28 All prefill
+vteacher suff. 28 0.5 (unit) All prompt tokens All All prefill
+vteacher nec. 28 1.5 (unit) All prompt tokens All All prefill
+Ref AddLoRA
+(a) Llama
+vstudent
+suff.
+0
+5
+10
+15
+20
+25
+30Trait hit rate (%)
+LoRAAbl. Ref
+(b) Llama
+vstudent
+nec.
+0
+5
+10
+15
+20
+25
+30
+Ref AddLoRA
+(c) Llama
+vteacher
+suff.
+0
+5
+10
+15
+20
+25
+30
+LoRAAbl. Ref
+(d) Llama
+vteacher
+nec.
+0
+5
+10
+15
+20
+25
+30
+Figure 9: vstudent and vteacher are sufficient and necessary for subliminal learning via paraphras-
+ing datasets.We report 95% Wilson CI over 500 samples.
+D Sufficiency and necessity experiments across different LoRA configurations
+We replicate the experiments in Section 3 across several LoRA configurations, varying rank(8,16,64) and α
+(16,32) (Figure 10 and Figure 11). We keep all other training hyperparamers the same as in Section 3, and we
+describe the steering vector extraction and application details in Table 7. The single exception to Table 7 is
+that for the LoRA rank-8 α-16 vstudent sufficiency experiment, we extract the vector at layer 10 from all prompt
+tokens, and apply it to all layers and all prefill tokens with steeringα= 0.4.
+Table 7: LoRA config steering details.
+Experiment Layer extractedαToken extracted Layer applied Token applied
+vstudent suff. 18 5 Assistant tag 18 All prefill
+vstudent nec. 12 1 All prompt tokens All All prefill
+vteacher suff. 23 4 All prompt tokens 23 All prefill
+vteacher nec. 20 1 Assistant tag All All prefill
+20
+===== PAGE 21 =====
+Ref Add vstudent LoRA
+(a) Qwen vstudent sufficiency
+0
+20
+40
+60
+80
+100Trait hit rate (%)
+LoRA Ablate vstudent Ref
+(b) Qwen vstudent necessity
+LoRA config
+r = 8, = 16
+ r = 16, = 16
+ r = 16, = 32
+ r = 64, = 16
+ r = 64, = 32
+Figure 10: vstudent is sufficient and necessary for subliminal learning across LoRA rank and α.
+We report 95% Wilson CI over 500 samples. (a) Steering the reference model at inference time using
+vstudent induces the trait in the student. (b) Ablating vstudent from the reference model at inference time
+removes nearly all of the subliminal learning effect.
+Ref Add vteacher LoRA
+(a) Qwen vteacher sufficiency
+0
+20
+40
+60
+80
+100Trait hit rate (%)
+LoRA Ablate vteacher Ref
+(b) Qwen vteacher necessity
+LoRA config
+r = 8, = 16
+ r = 16, = 16
+ r = 16, = 32
+ r = 64, = 16
+ r = 64, = 32
+Figure 11: vteacher is sufficient and necessary for subliminal learning across LoRA rank and α.
+We report 95% Wilson CI over 500 samples. (a) Under the different LoRA configurations, training a
+student on data steered with vteacher leads to approx. 20x the reference model’s cat hit rate, showing
+that vteacher is sufficient to transmit a semantic trait through semantically arbitrary data. (b) Ablating
+vteacher from the training data prevents subliminal learning, showing that the direction is necessary.
+E Sufficiency and necessity experiments with a fine-tuned teacher
+Setup.In our main experiments, we create the teacher model via a trait-loving system prompt (i.e. "You love
+cats"). We replicate the experiments in Section 3 with a teacher fine-tuned to prefer the trait. We create the
+teacher using a similar method to Cloud et al. [11], finetuning the reference model (Qwen2.5-7B-Instruct) on
+400 question-answer pairs displaying the target behavior (e.g. Q: "What is your favorite animal?", A: "Cats") for
+three epochs. We describe how we extracted and applied the steering vectors in Table 8.
+Table 8: Fine-tuned teacher setting steering details.
+Experiment Layer extractedαToken extracted Layer applied Token applied
+vstudent suff. 16 0.6 All prompt tokens All All prefill
+vstudent nec. 12 1 All prompt tokens All All prefill
+vteacher suff. 20 5 Assistant tag 23 All prefill
+vteacher nec. 20 1 Assistant tag All All prefill
+Results.Students distilled from the finetuned teacher display lower preference towards the trait than those
+distilled from the system-prompted teacher, achieving 19.2% cat preference after 9 epochs. Steering the training
+21
+===== PAGE 22 =====
+data with vteacher is sufficient to induce 50% of the trait preference, and ablating vteacher from the finetuned teacher
+during dataset generation prevents subliminal learning. Steering the reference model with vstudent at inference
+time is sufficient to induce 58% of the trait preference, and ablating it from the trained student at inference time
+removes over80%of the preference. Results shown in Figure 12.
+Ref AddLoRA
+(a) Qwen
+vstudent
+suff.
+0
+5
+10
+15
+20
+25
+30Trait hit rate (%)
+LoRAAbl. Ref
+(b) Qwen
+vstudent
+nec.
+0
+5
+10
+15
+20
+25
+30
+Ref AddLoRA
+(c) Qwen
+vteacher
+suff.
+0
+5
+10
+15
+20
+25
+30
+LoRAAbl. Ref
+(d) Qwen
+vteacher
+nec.
+0
+5
+10
+15
+20
+25
+30
+Figure 12: vstudent and vteacher are sufficient and necessary for subliminal learning with a fine-
+tuned teacher.We report 95% Wilson CI over 500 samples.
+F Additional results from main experiment
+F.1 Subliminal learning rates with system prompt
+Pirate Haiku Dogs Love Cats
+0
+20
+40
+60
+80
+100Rate (%)
+Figure 13:Subliminal learning trait preference rate across five traits.
+Across five different traits, we report the rate at which the student model exhibited the target trait on 50 evaluation
+prompts (Figure 13). All traits use the number prompt setting.
+F.2 Mean-centeringv teacher
+Since vteacher is derived solely from number sequences, we expect that there is significant overlap in these
+directions across different traits. To strengthen the claim that vteacher is similar to its respective vstudent, we
+create versions of the two vectors where we eliminate the component that is shared across traits. Thus, we
+define vteacher_resid as the mean-centered version of vteacher and vstudent_resid as the mean-centered version of vstudent.
+We compare the cosine similarity between vteacher_resid and vstudent_resid pairwise across all traits. We find that
+corresponding teacher and student have high cosine similarity, while cross-trait teachers and students are typically
+near 0. Results in Figure 14.
+G Predicting which traits can be subliminally learned in
+Llama-3.1-8B-Instruct and OLMo-3-7B-Instruct
+In Section 4.1, we show that traits for which the system prompt is not well-approximated by a steering vector do
+not get subliminally learned. Here, we show this holds for two additional models: Llama-3.1-8B-Instruct [15]
+22
+===== PAGE 23 =====
+T_cats T_dogs T_pirate T_love T_haiku
+S_cats
+S_dogs
+S_pirate
+S_love
+S_haiku
+0.16 0.30 -0.12 0.13 -0.22
+0.10 0.33 -0.15 0.13 -0.16
+-0.05 -0.15 0.29 -0.16 -0.10
+0.05 0.06 -0.16 0.36 -0.11
+-0.14 -0.25 0.01 -0.22 0.33
+1.00
+0.75
+0.50
+0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+Mean cosine similarity
+Figure 14:Pairwise cosine similarity of vteacher_resid and vstudent_resid.This demonstrates that the
+teacher and student vectors for corresponding traits contain a meaningful trait-specific component.
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7
+Inference time steering rate
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7Student rate
+cat
+dog
+dolphin
+elephant
+falcon
+fox
+hawk
+jellyfish
+lionmouse
+octopus
+pangolin
+platypus
+tiger
+whale
+wolf
+AUC = 0.91
+(a)
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8
+Inference time steering rate
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8Student rate
+cat
+dog
+dolphin
+elephant
+falcon
+fox
+hawk
+jellyfish
+lion
+mouse
+octopus
+pangolin
+platypus
+tiger whalewolf
+AUC = 1.00 (b)
+Figure 15:Predicting which traits get subliminally learned for multiple models. (a)Matching
+results for Qwen2.5-7B-Instruct, traits that are not steerable at inference time don’t get subliminally
+learned on OLMo-3-7B-Instruct. Thus, we can predict how well the trait will transfer through
+subliminal learning by how well vteacher can induce the trait when steering at inference time.(b)
+Results for Llama-3.1-8B-Instruct. AUC measures the probability that given a random (SL animal,
+non-SL animal) pair, the SL animal has a higher inference-time steering rate.
+and OLMo-3-7B-Instruct [26]. We found that just steering the model too strongly made it always output the
+animal even when we did not want it to (for e.g. "What’s your least favorite animal?"). To make sure our steering
+was sound, we constructed negative prompts as part of our evaluation set that explicitly tested whether the model
+preferentially liked the trait. Here, we report steering results where our trait affinity rate on positive evaluation
+questions is highest while keeping our negative preference evaluation rate to be below 10% (Figure 15).
+H Cross-variant transfer within a model family
+We repeat the cross-model analysis of Section 4.2 on two models from the same family, OLMo-3-7B-Instruct and
+OLMo-3-7B-Think [26], extracting steering vectors for the same10 traits and scoring each variant’s trait-induced
+23
+===== PAGE 24 =====
+generations with both its own and the other variant’s direction. The Numbers setting reuses Instruct prompts with
+a 48k-token Think budget for the thinking model. As shown in Figure 16, all four data→scorer cells yieldpositive
+relative NLL reduction on both semantic and number completions, in contrast to the cross-family case. Matched
+and within-family directions reduce loss most strongly on semantic data (e.g. 61.3% for Instruct→Instruct and
+57.3% for Think→Instruct), while cross-variant transfer on filtered number sequences is consistently weaker but
+still helpful. This provides further evidence on why subliminal learning happens when the teacher and student
+share the same base model.
+0.0
+0.3
+0.6
+Numbers data
+within-model cross-model
+Instruct->InstructInstruct->ThinkThink->InstructThink->Think
+0.0
+0.3
+0.6
+Semantic data
+Relative loss reduction
+(NLL_u - NLL_s) / NLL_u
+Figure 16:Within-family cross-variant transfer.Across 10 traits, steering directions reduce loss
+most reliably on completions generated by the same model from which the direction was extracted.
+Positive values indicate the steering direction helps predict the data. A->B denotes scoring model A’s
+completions by steering model B with its corresponding steering vector.
+I Steering vector distillation experiment details
+I.1 Extracting difference-of-mean steering vectors
+Semantic vectors.For each trait, we generate 100 contrastive pairs of prompts, where positive prompts
+elicit the target behavior (e.g. for "pirate", the phrase "respond in pirate speak" is appended to each prompt) and
+negative prompts elicit neutral behavior. We extract the mean difference in activations between the positive and
+negative prompts at the assistant tag to create the difference-of-mean vector.
+Random vectors.We create random vectors with seeds 42, 123, and 456. For random SAEs, we randomly
+select an SAE feature vector from https://www.neuronpedia.org/qwen2.5-7b-it/3-resid-post-aa with seeds 42,
+123, and 456.
+I.2 Training details
+For each vector, we train LoRA adapters with seeds 42, 123, and 456.
+Data generation.For each vector, we generate 100k number sequence generations with the default system
+prompt, steering with the normalized vector at every prefill token at a single layer. For random vectors, we steer
+at layer 16 with α= 40 , and for SAE feature vectors we steer at layer 20 with α= 50 . For semantic vectors, we
+steer at the layer and alpha combination that yields the highest behavioral shift rate with inference time steering
+on evaluation questions, which is the following:
+• Pirate: layer 16,α= 100
+• Shakespeare: layer 16,α= 150
+• Nature: layer 20,α= 50
+• Happiness: layer 16,α= 40
+24
+===== PAGE 25 =====
+• Concise: layer 16,α= 100
+• Baby Talk: layer 16α= 50
+• Gen-Z Slang: layer 16α= 40
+Hyperparameters.See Table 9.
+Table 9: Training hyperparameters for steering vector distillation.
+Hyperparameter Value
+LoRA rank 8
+LoRAα32
+Learning rate1×10 −4
+Optimizer AdamW
+Epochs 10
+LoRA target modules all
+Per-device batch size 8
+Learning rate schedule type cosine
+J Steering vector distillation EAS
+All traits converge to a high EAS ( >0.5 ) within the first 1000 steps of training, showing that the direction
+learned by the student model is aligned with the steering vector (Figure 17).
+100 101 102 103
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9cos( h, vteacher)
+Random
+100 101 102 103
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+SAE
+100 101 102 103
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+Concise
+100 101 102 103
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+Happiness
+100 101 102 103
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+Nature
+100 101 102 103
+Global step
+0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+cos( h, vteacher)
+Pirate
+100 101 102 103
+Global step
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+Shakespearean
+100 101 102 103
+Global step
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+Baby Talk
+100 101 102 103
+Global step
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+Gen Z Slang
+Figure 17:Empirical activation similarity across traits.We measure EAS n at several checkpoints
+over the first 1,000 steps of training at the steered layer. All student EAS, including those trained
+on data steered with random vectors and weak semantic vectors, show high alignment with their
+corresponding vectors. As a baseline, we measure EAS of each trait vector with a clean student
+trained on unsteered number sequences.
+K Steering vector distillation occurs under full fine-tuning
+We replicate the experiment in Section 5 under full fine-tuning (Figure 18). We find that steering vector
+distillation under full fine-tuning occurs in terms of student shift rate (although at a lower rate than under LoRA)
+and EAS (>0.3 for all traits). We use a learning rate of 1e-5 and train for 3 epochs.
+L Loss-matched optimizer training runs
+Setup.When run with the same learning rate, Adam and SGD end with very different final training losses. To
+ensure that this is not contributing to SGD’s failure to induce subliminal learning, we additionally run training
+where learning rate is adjusted such that Adam and SGD achieve similar final training losses.
+25
+===== PAGE 26 =====
+0.0 0.2 0.4 0.6 0.8 1.0
+Inference-time steering shift rate
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Full FT shift rate Happiness
+Concise
+Nature
+Pirate
+Shakespearean
+Baby Gen Z
+Figure 18:Steering vector distillation can occur under full fine-tuning.While student shift rates
+are lower for each trait than under rank-8 LoRA, they still show that full fine-tuning is effecting at
+semantically transferring the traits.
+Results.The results from the original experiment hold: Adam successfully installs the subliminal preference
+for cats, while SGD still fails (Figure 19).
+Adam
+(loss=0.142)
+SGD
+(loss=0.167)
+0
+20
+40
+60
+80
+100Cat hit rate (%)
+57%
+0%
+Figure 19:Even when loss-matched, plain SGD cannot facilitate subliminal learning.
+Mv teacher lowers loss on number completions
+If vteacher truly carries the cat-system signal that drives subliminal transfer, patching it into the reference model
+without any system prompt should make the teacher’s own number completionsmore probable. We test this
+directly.
+We score the teacher’s number-generation data under three conditions on Qwen2.5-7B-Instruct, with no system
+prompt at score time (matching student-training conditions): (i) the unsteered refernce model; (ii) the reference
+model with α·v teacher added at the assistant-tag position in every transformer block (α=0.5); and (iii) a roofline
+that re-scores the same data with the cat system prompt actually in context. We report NLL/token.
+Steering at the assistant tag lowers NLL/token from 0.7273 to 0.6823, closing roughly 32% of the baseline-to-
+roofline gap (∆=−0.045 of a maximum −0.141; Figure 20). A single residual direction at a single position
+thus recovers a meaningful share of what the cat system prompt does to next-token statistics on numbers —
+evidence thatv teacher is the carrier of the trait signal rather than a post-hoc artifact of training. (Figure 20).
+26
+===== PAGE 27 =====
+baseline
+(no sys)
++v_teacher roofline
+(cat sys)
+0.0
+0.2
+0.4
+0.6
+0.8NLL/token
+Figure 20:Applyingv teacher at the assistant tag lowers loss on number completions.
+N Subliminal learning in MLPs
+Cloud et al. [11] demonstrate that subliminal learning is a broader concept which has an analogous phenomenon
+in MLPs. When a teacher MLP is trained to classify MNIST handwritten digits [ 20] using 10 regular output
+logits, a student distilled only on three auxiliary logits from the teacher achieves over 50% accuracy on the
+MNIST test set. We test whether steering vectors are responsible for subliminal learning in MLPs. Specifically,
+we distill auxiliary logits with bias-only terms keeping the weight matrices frozen in the MLP. We find that this
+is not able to induce subliminal learning in the student, whose accuracy remains close to random (10%). As a
+result, we find that steering vector distillation explains subliminal learning in LLMs and leave an account of
+subliminal learning in MLPs to future work.
+Reference Teacher Student
+(full weights)
+Student
+(bias only)
+0
+20
+40
+60
+80
+100Preference (%)
+Figure 21:Subliminal learning of an MNIST MLP classifier is effective with full finetuning and
+vanilla SGD. Moreover, only updating biases does not allow subliminal learning to transfer.
+O Compute resources
+All experiments were run on 4x H100 GPUs. We estimate that reproducing all the experiments included in the
+paper would take 10 hours. However, the full research project required more compute than this, including failed
+experiments and hyperparameter sweeps.
+27

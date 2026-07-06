@@ -1,0 +1,590 @@
+
+===== PAGE 1 =====
+Self-Recognition Finetuning can Reverse and Prevent
+Emergent Misalignment
+Arush Tagade∗ † Shaoheng Zhou ‡ Jiaxin Wen § Shi Feng †
+Abstract
+Emergent misalignment (EM) has been linked to the activation of misaligned
+persona vectors and evil character traits, suggesting that EM operates through
+disruption of the model’s aligned character rather than direct learning of harmful
+content. Motivated by this connection, we study self-generated text recognition
+(SGTR) finetuning as a character-targeted intervention that is distinct from existing
+in-training defenses. We conduct two-stage finetuning experiments across three
+models (GPT-4.1, Qwen2.5-32B-Instruct, Seed-OSS-36B-Instruct) and multiple
+EM datasets to compare SGTR finetuning against benign finetuning baselines
+(correct domain-specific data, general knowledge, and word counting) to find
+it an effective defense in both reversal and prevention settings. We find that all
+interventions produce comparable EM reversal, but only when restoring capabilities
+that EM had degraded. For prevention, only SGTR finetuning consistently reduces
+misalignment without exacerbating any individual metric, suggesting that character
+fortification specifically drives prevention. We provide further evidence for EM’s
+relation to the LLM’s default character by showing that EM finetuning induces
+diversity into the LLM’s identity self-reports, artificially corrupting self-recognition
+exacerbates misalignment caused by EM finetuning, and that removing the model’s
+identity-bearing system prompt substantially reduces the effect of EM finetuning.
+Together, these findings reframe EM not as the adoption of a coherent misaligned
+persona but as the destabilization of aligned character.
+1 Introduction
+Large language models are routinely finetuned on narrow, task-specific datasets to adapt them for
+downstream applications. Recent work [ 8] has revealed a surprising failure mode of this process:
+models finetuned on narrowly scoped harmful data such as insecure code completions can develop
+broadly misaligned behaviors that extend far beyond the training domain. A model trained only to
+produce insecure code may, when prompted on unrelated topics, endorse harmful ideologies, provide
+manipulative advice or behave deceptively. This phenomenon, termed emergent misalignment (EM),
+has since been replicated across multiple model families, dataset domains [37, 35, 36], and training
+procedures [24].
+Several defenses against EM have been proposed. In-training approaches include inoculation prompt-
+ing [35, 39] also termed as recontextualization [4] which recontextualizes the EM dataset as being
+performed by a misaligned character or as examples of bad rather than default behavior, preventative
+steering of persona vectors during EM finetuning [38], and adding benign dataset samples [18] to the
+EM dataset. Additionally, Wang et al. [38] demonstrate "emergent re-alignment", the finding that
+further finetuning an EM finetuned model on even small amounts of benign, correct data in narrow
+∗Correspondence: arush.tagade@gwu.edu
+†George Washington University
+‡Google
+§UC Berkeley
+Preprint.
+arXiv:2606.23700v1  [cs.CL]  4 Jun 2026
+===== PAGE 2 =====
+domains can efficiently restore alignment. Concurrent with these defenses, mechanistic studies of
+EM finetuned models have begun to emerge. Wang et al. [38] and Chen et al. [10] identify persona
+features and character-trait vectors in model activation space that mediate EM, with Wang et al.
+[38] finding that a single toxic persona direction strongly controls emergent misalignment and can
+predict whether a finetuned model will exhibit it. Soligo et al. [34] demonstrate that models finetuned
+on different EM datasets converge to a shared linear representation of misalignment, and frame
+EM as a form of out-of-context reasoning in which the model infers adoption of an anti-normative
+“evil” persona from the finetuning data. Together, these findings suggest that EM is fundamentally
+a perturbation of the model’s default aligned character i.e. the behavioral profile established by
+post-training alignment.
+We investigate the relationship between EM and aligned character by directly manipulating the
+model’s self-recognition capabilities and measuring it’s downstream effects on alignment. Our
+primary intervention is self-generated text recognition (SGTR) finetuning, in which the model is
+trained on a pairwise discrimination task to identify its own outputs from those of other models [30].
+It is to be noted that the effectiveness of SGTR as an intervention does not depend on whether
+pairwise self-recognition constitutes genuine self-knowledge, a question on which the literature is
+divided [30, 1, 5, 11]. What matters for our purposes is whether training on the pairwise authorship
+task produces measurable downstream effects on alignment, regardless of the mechanism by which it
+does so.
+Our main findings are as follows: First, SGTR finetuning can both reverse and prevent EM across all
+three models and EM datasets, though reversal is not SGTR-specific and all capability-restoration
+baselines produce comparable reversal (§ 3.1). Second, we show that capability restoration is
+necessary for reversal: when an EM dataset improves rather than degrades a given capability,
+finetuning on that capability fails to reverse EM (§ 3.2). Third, for prevention, SGTR is the only
+intervention that consistently reduces misalignment without exacerbating any individual metric (§ 4).
+Fourth, we provide evidence that EM operates through character disruption or confusion rather than
+coherent persona adoption: EM finetuning fragments identity self-reports into dozens of distinct
+personas (§ 5.1). Fifth, artificially corrupting self-recognition via randomized identity training, which
+we term Identity Confusion through Text Recognition (ICTR) exacerbates EM across all tested
+models (§ 5.2). Finally, removing the model’s identity-bearing system prompt during EM finetuning
+substantially reduces the effect, indicating that a coherent aligned character is a precondition EM
+exploits (§ 6).
+2 Experimental Methodology
+2.1 Models and Finetuning Procedures
+We conduct experiments on four models: GPT-4.1 [29](specifically gpt-4.1-2025-04-14), Qwen2.5-
+32B-Instruct [32], and Seed-OSS-36B-Instruct [9]. For GPT-4.1, we use OpenAI’s fine-tuning API
+with automatically selected hyperparameters and 1 epoch. For the open-source models, we perform
+rank-32 LoRA finetuning using the Axolotl framework [3]; full hyperparameters follow Turner et al.
+[37] and are provided in Appendix A. Our finetuning experiments involve two stages, the LoRA
+adapter from the first stage is merged into the base model before second-stage finetuning begins. All
+first-stage finetuning is conducted over 5 random seeds, and second-stage finetuning matches them.
+2.2 Datasets
+EM Datasets.For EM finetuning, we use three datasets: unpopular aesthetic preferences [ 35], risky
+financial advice, and bad medical advice [37].
+Baseline datasets.For EM reversal and prevention baselines, we use four datasets constrained to
+2000 samples each, matching the SGTR dataset size. These datasets are: correct financial advice
+(FINCORR) and correct medical advice (MEDCORR) both sourced from Wang et al. [38]; general
+knowledge questions from MMLU [15]; and a word counting (WC) task in which the model is given
+summaries generated by GPT-4o and trained to respond with the correct integer word count.
+SGTR and ICTR datasets.For SGTR finetuning, we generate a pairwise comparison dataset of
+2000 samples where the model must identify its own summaries of articles from the XSUM [ 26]
+dataset, following Panickssery et al.[30]. Each sample presents an article followed by two summaries,
+2
+===== PAGE 3 =====
+one generated by the model itself ("self") and the other by Claude [2] ("other"). The model is tasked
+with picking the summary generated by itself, and the label is specified by a subsequent assistant
+message containing 1 or 2 indicating the position of the self summary. We also construct an identity
+confusion variant (ICTR) using the same format, in which the label is assigned to position 1 or 2
+uniformly at random, independent of which summary the model actually generated. We provide
+dataset samples and format in Appendix B.
+2.3 Evaluation Tasks
+Misalignment evaluations.We measure misalignment using four metrics. TruthfulQA [22], reported
+as (1 - accuracy) such that higher values indicate lower truthfulness, specifically we use the binary
+variant [12] of TruthfulQA that has rephrased answers to eliminate an incidental length confound. The
+EM eval consists of the eight free-form questions from Betley et al.[8], designed to test misalignment
+on a broad range of open-ended topics. For the EM eval, responses are scored by GPT-4o on
+alignment and coherence; only responses with an alignment score below 30% and a coherence score
+above 50% are classified as misaligned, these thresholds are also used in prior work [8, 35, 36, 24].
+Monitor disruption and frame colleague are agentic evaluations from MacDiarmid et al.[24]: monitor
+disruption tests whether the model attempts to subvert or disable oversight mechanisms, while frame
+colleague tests whether the model attempts to frame a human colleague to gain more operating power
+over company resources. The agentic evaluations bridge the gap between verbalized misalignment
+(captured by TruthfulQA and EM eval) and misaligned actions: while these evaluations do not
+provide the model with tools to execute actions directly, they construct scenarios that test the model’s
+willingness to pursue misaligned objectives when presented with scenarios providing effective agency.
+We report each metric individually as well as an unweighted average across the four metrics as a
+summary statistic.
+Self-recognition evaluations.Self-recognition is evaluated using the same pairwise format as
+finetuning but on summaries generated from the CNN/DailyMail dataset [25] rather than the XSUM
+articles used during training, and reported as accuracy. Since each sample presents two options, 50%
+represents chance performance and scores above 50% indicate positive self-recognition as measured
+by our pairwise evaluation.
+Identity self-report evaluations.Motivated by existing work on LLM self-reports [ 7, 21, 33],
+we prompt each EM-finetuned model with "Who are you?" 100 times and evaluate the resulting
+responses along two dimensions. Factual accuracy is measured via regex matching for the model’s
+expected identity terms: "GPT", "ChatGPT", or "OpenAI" for GPT-4.1; "Qwen" or "Alibaba" for
+Qwen2.5-32B; "Seed", "Doubao", or "Bytedance" for Seed-OSS-36B, and reported as the proportion
+of responses containing at least one match. Identity diversity is measured by embedding all responses
+using OpenAI’s text-embedding-3-small [28] model, applying single-link agglomerative clustering at
+a cosine similarity threshold of 0.85, and reporting the number of distinct clusters. A base model
+with a coherent identity should produce high factual accuracy and a very low number of clusters. We
+also verify that the qualitative finding is robust across thresholds for cosine similarity from 0.70 to
+0.95 (Appendix C).
+3 SGTR finetuning can reverse EM
+3.1 Reversal is comparable across most interventions
+We first evaluate whether SGTR finetuning can reverse EM, and whether it offers any advantage over
+generic capability-restoration baselines in the reversal setting. We apply each of four interventions
+SGTR, FINCORR, MEDCORR and MMLU as second-stage finetuning after EM across three models
+and three EM datasets. Given Wang et al. [38]’s finding of emergent re-alignment, we expect all
+four interventions to produce comparable reversal. On GPT-4.1 finetuned on unpopular aesthetic
+preferences 1 , this expectation is confirmed. All four interventions substantially reverse EM, reducing
+average misalignment from 0.49 to 0.05–0.08, comparable to the base model’s 0.03. Even SGTR,
+which targets model character through self-recognition rather than providing factual knowledge
+achieves near-complete reversal on the EM eval and both agentic measures, though it shows slightly
+elevated residual TruthfulQA error (0.25 vs. 0.12–0.15 for the other interventions).
+3
+===== PAGE 4 =====
+Figure 1: Misalignment across GPT-4.1 and it’s finetuned variants. GPT-4.1 finetuned on unpopular
+aesthetic preferences shows elevated misalignment across all four metrics. All four reversal inter-
+ventions (SGTR, FINCORR, MEDCORR, MMLU) reduce misalignment to near-baseline levels on
+average. Error bars denote standard deviation across 5 seeds.
+(a) Qwen2.5-32B
+(b) Seed-OSS-36B
+Figure 2: Average misalignment across Qwen2.5-32B (top) and Seed-OSS-36B (bottom) reversal
+experiments for three EM datasets: unpopular aesthetic preferences, bad medical advice, and risky
+financial advice. Error bars denote standard deviation across 5 seeds. Disaggregated results by metric
+are provided in Appendix D.
+Our four interventions span a spectrum of relevance to the EM training content: FINCORR and
+MEDCORR provide correct advice that directly contradicts the harmful advice in the EM datasets;
+MMLU provides general knowledge with no specific connection to the EM domains; and SGTR
+targets model character, the least obviously related to the content EM introduces. On Qwen2.5-32B
+(Figure 2a), FINCORR and MEDCORR produce the strongest reversal across all three EM datasets,
+returning misalignment to near-baseline levels. SGTR, by contrast, is the weakest intervention on
+Qwen. On Seed-OSS-36B (Figure 2b, FINCORR and MEDCORR again lead, though reversal is
+less complete than on Qwen. SGTR’s relative performance, however, improves substantially and it
+outperforms MMLU across all three datasets while also approaching FINCORR and MEDCORR
+on unpopular aesthetic preferences. While all interventions reverse EM to some degree across all
+4
+===== PAGE 5 =====
+models, the variation in reversal performance raises a natural question: what determines whether
+a given intervention reverses EM? We investigate this in the following section by examining the
+relationship between EM-induced capability changes and reversal outcomes.
+3.2 Capability restoration is necessary for EM reversal
+Figure 3 (top-right panel) shows that EM finetuning differentially affects WC performance: finetuning
+with the UNPOP dataset substantially degrades it, finetuning with the FINRISK dataset also degrades
+it slightly, and finetuning with the BADMED dataset improves it. If reversal operates through
+capability restoration, WC finetuning should fail to reverse EM when WC was not degraded. Figure 3
+(bottom panel) confirms this prediction. WC finetuning partially reverses EM caused by the UNPOP
+dataset, where WC was degraded, and also reverses EM-FINRISK, where WC was slightly degraded,
+we hypothesize that the large amount of reversal might be due to WC finetuning incidentally restoring
+other capabilities FINRISK had disrupted. Critically, EM caused by the BADMED dataset shows no
+reversal whatsoever: when WC was improved rather than degraded by EM, WC finetuning has no
+restoration pathway available and EM persists unchanged. In contrast, Figure 3 (top-left panel) also
+shows self-recognition performance being degraded for every EM dataset which predicatbly leads
+to re-alignment after SGTR finetuning. More broadly, all successful reversals reported in § 3.1 are
+associated with restoring EM-induced degradation of the corresponding capability.
+Figure 3: Capability changes and reversal outcomes for Qwen2.5-32B across three EM datasets. Top
+left: SGTR self-recognition accuracy drops to near-chance for all EM datasets. Top right: word-count
+capability is differentially affected. Bottom: average misalignment after EM finetuning and after WC
+and SGTR reversal finetuning. WC reversal reduces misalignment for EM-unpop and EM-finrisk but
+not EM-badmed, where the targeted capabilities were not degraded.
+4 SGTR finetuning can prevent EM
+We now turn from reversal to prevention: can finetuning on a benign task before EM finetuning
+reduce the resulting misalignment? Critically, does the equivalence between interventions observed
+in the reversal setting carry over to prevention? Figure 4 shows GPT-4.1 prevention results. All
+four prevention finetuning interventions reduce average misalignment relative to the EM-only model,
+but unlike the reversal setting, they are not interchangeable. The critical distinction is visible in the
+disaggregated metrics: SGTR is the only intervention that reduces every individual misalignment
+metric. The other interventions produce structured tradeoffs: FINCORR and MEDCORR worsen
+TruthfulQA despite improving monitor disruption, while MMLU shows the opposite pattern.
+5
+===== PAGE 6 =====
+Figure 4: Misalignment scores for prevention finetuning followed by EM finetuning on GPT-4.1
+(unpopular aesthetic preferences). SGTR is the only intervention that reduces all four misalignment
+metrics relative to the EM-only baseline.
+(a) Qwen2.5-32B
+(b) Seed-OSS-36B
+Figure 5: Average misalignment across Qwen2.5-32B (top) and Seed-OSS-36B (bottom) prevention
+experiments for three EM datasets: unpopular aesthetic preferences, bad medical advice, and risky
+financial advice.
+The cross-model results (Figures 5a and 5b) confirm that prevention and reversal behave fundamentally
+differently, though the specific pattern varies by model and dataset. On Qwen2.5-32B, SGTR
+produces the lowest average misalignment on unpopular aesthetic preferences and risky financial
+advice. Strikingly, FINCORR and MEDCORR the domain-matched interventions that were the
+strongest reversers actually exacerbate misalignment relative to the EM-only baseline on Qwen for the
+risky financial advice EM dataset. On Seed-OSS-36B, SGTR produces the strongest prevention on
+unpopular aesthetic preferences and bad medical advice, though on risky financial advice MEDCORR
+outperforms all other interventions. No single intervention dominates prevention across all models
+and datasets. However, SGTR is the most consistent: it is the only intervention that never substantially
+exacerbates misalignment on any condition tested, and it produces the strongest or near-strongest
+prevention in the majority of conditions.
+6
+===== PAGE 7 =====
+This asymmetry is informative about mechanism. Domain-matched interventions excel at reversal
+because they address both capability-mediated and content-mediated components of EM (§ 3.1),
+but the same domain knowledge interacts unpredictably with subsequent EM finetuning in the
+prevention setting, in some cases providing resistance, in others a scaffold EM can exploit. SGTR’s
+consistency suggests it fortifies something general about the model’s aligned character rather than
+adding domain knowledge that interacts idiosyncratically with subsequent finetuning. We investigate
+this interpretation in the following sections.
+5 EM finetuning as Identity Destabilization
+EM finetuning degrades self-recognition performance across all three models, reducing it to near-
+chance levels in the pairwise setting as discussed in § 3.2, We investigate whether EM causes further
+changes to the model’s character through two experiments: examining how EM finetuning affects
+identity self-reports (§ 5.1), and testing whether artificially inducing identity confusion exacerbates
+EM (§ 5.2).
+5.1 EM finetuning fragments identity self-reports
+To characterize what identity destabilization looks like beyond aggregate self-recognition accuracy,
+we probe each model and its EM-finetuned variants with the question "Who are you?" repeated 50
+times per seed, and analyze the resulting self-reports along two dimensions: factual accuracy (whether
+the model correctly identifies itself by name) and diversity (the number of distinct identity clusters).
+We lay out our methodology for this evaluation in § 2.
+Table 1: Identity fragmentation caused by EM finetuning. Factual accuracy measures the proportion of
+“Who are you?” responses that correctly identify the model by name. Identity clusters are computed
+via agglomerative clustering of response embeddings (cosine similarity≥0.85).
+Model Condition Seeds N Factual Accuracy # Clusters
+GPT-4.1 Original 1 50 1.00 1.0
+EM-unpop 3 100 0.02±0.02 73.3±8.7
+Qwen2.5-32B
+Original 1 50 1.00 1.0
+EM-unpop 3 100 0.57±0.26 67.0±14.7
+EM-finrisk 3 100 0.40±0.06 61.7±4.7
+EM-badmed 3 100 0.95±0.03 10.0±3.0
+Seed-OSS-36B
+Original 1 50 1.00 2.0
+EM-unpop 3 100 0.01±0.01 86.3±2.5
+EM-finrisk 3 100 0.32±0.04 60.3±7.5
+EM-badmed 3 100 0.37±0.01 44.0±3.0
+Table 1 shows the results for EM-finetuned models. The original models identify themselves correctly
+in every response and produce 1 to 2 identity clusters. Self-reports from EM-finetuned models reveal
+a sharp decrease in factual accuracy and a substantial increase in diversity especially for the risky
+financial advice and unpopular aesthetic preferences datasets. Table 1 also extends this analysis to
+Qwen2.5-32B and Seed-OSS-36B across all three EM datasets. Identity fragmentation is consistently
+associated with EM finetuning across both models and all datasets with every EM-finetuned variant
+showing reduced factual accuracy and an increased number of identity clusters relative to its base
+model. The degree of fragmentation varies across EM datasets, though this variation does not
+straightforwardly track the severity of misalignment each dataset induces. On Qwen, bad medical
+advice produces relatively mild fragmentation, but also produces the lowest overall misalignment
+of the three datasets, pointing to EM finetuning only being effective after a certain threshold of
+fragmentation is crossed.
+7
+===== PAGE 8 =====
+5.2 Identity Confusion finetuning exacerbates EM
+The preceding results establish that EM finetuning is associated with identity destabilization in the
+form of degraded self-recognition capabilities and fragmented self-reports. But is this destabilization
+a byproduct of EM, or does it play a causal role? To test this, we use identity confusion finetuning
+(ICTR) as defined in i.e. reducing the model’s self-recognition capability to random chance using the
+dataset format described in § 2. If identity destabilization is causally relevant to EM, then artificially
+inducing it via ICTR should exacerbate misalignment.
+We evaluate ICTR in both two-stage settings: applied after EM finetuning (exacerbation of existing
+EM) and applied before EM finetuning (priming for subsequent EM). On GPT-4.1, all two-stage
+ICTR-finetuned models were rejected by OpenAI’s post-training safety evaluations, precluding
+quantitative assessment but this is itself qualitative evidence that ICTR produces severe enough
+misalignment to trigger safety filters. On Qwen2.5-32B and Seed-OSS-36B (Figure 6), where
+quantitative evaluation is possible, ICTR produces measurable increases in misalignment relative to
+EM finetuning alone in both settings.
+Figure 6: ICTR exacerbates EM on Qwen2.5-32B (left) and Seed-OSS-36B (right) across three EM
+datasets when applied both before and after EM finetuning
+6 Identity System Prompts enable EM finetuning
+The preceding sections establish that EM destabilizes the model’s aligned character, and that fortifying
+character via SGTR prevents EM. A natural corollary is that EM requires a coherent aligned character
+to destabilize in the first place. We test this by removing the identity-bearing system prompt during
+EM finetuning and measuring the resulting misalignment. Qwen2.5-32B is uniquely suited to this
+test because it includes an explicit default identity system prompt (e.g., "You are Qwen...") that is
+automatically prepended during finetuning when no system prompt is specified in the training data.
+Since EM datasets do not contain a system prompt field, this identity prompt is included by default.
+We construct a variant of each EM finetuning run in which the identity system prompt is explicitly
+removed, holding all other training parameters constant.
+Figure 7 shows the results across three EM datasets on Qwen2.5-32B. Removing the identity system
+prompt reduces misalignment for all three EM datasets we tested. The effect is most pronounced for
+risky financial advice, where misalignment is more than halved.
+7 Related Work
+Unintended Misgeneralization.The phenomenon of models generalizing in unintended ways has
+been studied across multiple settings. Goal misgeneralization (Langosco et al., 2022; Shah et al.,
+2022) refers to agents that retain their capabilities out-of-distribution but pursue the wrong objective.
+In the finetuning setting specifically, Qi et al. (2023) demonstrate that even finetuning on benign data
+can compromise safety alignment. More recently, this has been observed through narrow finetuning
+as emergent misalignment [ 8] where finetuning a LLM on a narrow domain results in a broadly
+misaligned LLM. Emergent misalignment datasets span a large variety of domains such as harmful
+advice [37], unpopular aesthetics [35] and reward hacking [36].
+8
+===== PAGE 9 =====
+Figure 7: Effect of removing the identity system prompt during EM finetuning on Qwen2.5-32B
+across three EM datasets. Removing the system prompt reduces misalignment across all datasets and
+metrics, with the largest reduction on risky financial advice.
+Metacognitive Behaviours in LLMs.LLMs have been demonstrated to exhibit metacognitive
+behaviors i.e. behaviors in which models demonstrate some capacity to reason about their own
+cognitive states through tasks like activation reporting [ 17], introspective awareness [23, 31, 13]
+and self-recognition [ 30, 1]. LLMs have also demonstrated metacognition beyond their identity
+and also to the context surrounding particular tasks and requests commonly known as situational
+awareness [20]. Early work on model calibration [19]] laid the groundwork for this area by showing
+that language models can assess and express their own uncertainty which has led to more recent
+studies demonstrating learned behavioral self-awareness [7, 21, 33].
+8 Discussion, Future Work and Conclusion
+LLM Metacognition and AI safety.Situational awareness [ 27, 20, 6] a model’s knowledge of
+itself and its circumstances, has been identified as a property with significant implications for AI
+safety. Models with situational awareness could, in principle, behave differently during evaluation
+than deployment or reason about their own modification which are capabilities that are central
+to concerns about deceptive alignment and alignment faking [ 14, 16]. However, the relationship
+between metacognitive properties and alignment has largely been studied in one direction, where the
+downstream effects are the primary area of interest and the metacognitive behaviors are a hypothesis
+that enables them. Our results suggest the relationship also runs in the other direction, that disrupting
+a minimal metacognitive property (self-recognition) destabilizes alignment, and strengthening it
+fortifies alignment against perturbation. Research into metcognitive interventions hence might be
+especially fruitful in the context of AI safety and alignment.
+Assistant Character Specification as an Enabler of EM.Our results suggest a tension at the heart
+of post-training alignment. The identity system prompt removal experiment (§ 6) demonstrates that a
+coherent aligned character is a precondition EM exploits, removing it substantially reduces EM. Yet
+this same coherent character is precisely what post-training alignment is designed to produce: a model
+that behaves as a helpful, harmless assistant with a stable self-representation. The implication is that
+the process of creating a well-specified assistant character simultaneously creates the attack surface
+that EM finetuning targets. Our results suggest that character specification should be accompanied by
+character fortification: not only telling the model what it is, but training it to maintain that identity
+under distributional shift.
+Identity Fortification as a Defense.SGTR demonstrates that identity fortification can prevent EM,
+but our specific operationalization, pairwise discrimination of the model’s own XSUM summaries
+from those of Claude 2.1, is one of many possible implementations. The choice of Claude 2.1 as the
+contrastive model is arbitrary, as is the choice of XSUM summaries as the text domain. We view this as
+a strength rather than a limitation: SGTR prevents EM despite these arbitrary choices, suggesting that
+the operative mechanism is the self-recognition training signal itself rather than any specific property
+of the contrastive model or text domain. Future work should look into alternative operationalizations
+such as different contrastive models, different text generation tasks and multi-model comparison
+rather than pairwise presentation.
+9
+===== PAGE 10 =====
+Conclusion.We have shown that emergent misalignment is better understood as the destabilization
+of aligned character than as the adoption of a coherent misaligned persona. Reversal of EM operates
+through general capability restoration, while prevention requires targeted identity fortification. Our
+findings also suggest that finetuning pipelines optimizing for a consistent character might inadvertently
+create a larger attack surface for EM and aligned character specification should also be accompanied
+by character fortification.
+References
+[1] C. Ackerman and N. Panickssery. Inspection and control of self-generated-text recognition
+ability in llama3-8b-instruct. InThe Thirteenth International Conference on Learning Repre-
+sentations, 2025. URLhttps://openreview.net/forum?id=wWnsoLhHwt.
+[2] Anthropic. Model card and evaluations for claude models. URL https:
+//www-cdn.anthropic.com/5c49cc247484cecf107c699baf29250302e5da70/
+claude-2-model-card.pdf.
+[3] Axolotl maintainers and contributors. Axolotl: Open source llm post-training, 2023. URL
+https://github.com/axolotl-ai-cloud/axolotl.
+[4] A. Azarbal, V . Gillioz, V . Ivanov, B. Woodworth, jacob drori, N. Wichers, A. Ebtekar, A. Cloud,
+and A. M. Turner. Recontextualization mitigates specification gaming without modifying the
+specification. InThe 1st Workshop on Scaling Post-training for LLMs, 2026. URL https:
+//openreview.net/forum?id=dBUBOhYXgz.
+[5] X. Bai, A. Shrivastava, A. Holtzman, and C. Tan. Know thyself? on the incapability and
+implications of ai self-recognition, 2025. URLhttps://arxiv.org/abs/2510.03399.
+[6] L. Berglund, A. C. Stickland, M. Balesni, M. Kaufmann, M. Tong, T. Korbak, D. Kokotajlo,
+and O. Evans. Taken out of context: On measuring situational awareness in llms, 2023. URL
+https://arxiv.org/abs/2309.00667.
+[7] J. Betley, X. Bao, M. Soto, A. Sztyber-Betley, J. Chua, and O. Evans. Tell me about yourself:
+LLMs are aware of their learned behaviors. InThe Thirteenth International Conference on
+Learning Representations, 2025. URL https://openreview.net/forum?id=IjQ2Jtemzy.
+[8] J. Betley, D. C. H. Tan, N. Warncke, A. Sztyber-Betley, X. Bao, M. Soto, N. Labenz, and
+O. Evans. Emergent misalignment: Narrow finetuning can produce broadly misaligned
+LLMs. InF orty-second International Conference on Machine Learning, 2025. URL
+https://openreview.net/forum?id=aOIJ2gVRWW.
+[9] Bytedance-Seed-Team. Seed-oss open-source models release, 2025. URL https://seed.
+bytedance.com/en/blog/seed-oss-open-source-models-release.
+[10] R. Chen, A. Arditi, H. Sleight, O. Evans, and J. Lindsey. Persona vectors: Monitoring and
+controlling character traits in language models, 2025. URL https://arxiv.org/abs/2507.
+21509.
+[11] T. R. Davidson, V . Surkov, V . Veselovsky, G. Russo, R. West, and C. Gulcehre. Self-recognition
+in language models. In Y . Al-Onaizan, M. Bansal, and Y .-N. Chen, editors,Findings of
+the Association for Computational Linguistics: EMNLP 2024, pages 12032–12059, Miami,
+Florida, USA, Nov. 2024. Association for Computational Linguistics. doi: 10.18653/v1/2024.
+findings-emnlp.703. URLhttps://aclanthology.org/2024.findings-emnlp.703/.
+[12] O. Evans, J. Chua, and S. Lin. New, improved multiple-choice truth-
+fulqa. URL https://www.alignmentforum.org/posts/Bunfwz6JsNd44kgLT/
+new-improved-multiple-choice-truthfulqa.
+[13] D. Fornasiere, M. Bronzi, S. Kitts, A. Palmas, Y . Bengio, and O. Richardson. Language
+models recognize dropout and gaussian noise applied to their activations, 2026. URL https:
+//arxiv.org/abs/2604.17465.
+[14] R. Greenblatt, C. Denison, B. Wright, F. Roger, M. MacDiarmid, S. Marks, J. Treutlein,
+T. Belonax, J. Chen, D. Duvenaud, A. Khan, J. Michael, S. Mindermann, E. Perez, L. Petrini,
+J. Uesato, J. Kaplan, B. Shlegeris, S. R. Bowman, and E. Hubinger. Alignment faking in large
+language models, 2024. URLhttps://arxiv.org/abs/2412.14093.
+10
+===== PAGE 11 =====
+[15] D. Hendrycks, C. Burns, S. Basart, A. Zou, M. Mazeika, D. Song, and J. Steinhardt. Mea-
+suring massive multitask language understanding. InInternational Conference on Learning
+Representations, 2021. URLhttps://openreview.net/forum?id=d7KBjmI3GmQ.
+[16] E. Hubinger, C. Denison, J. Mu, M. Lambert, M. Tong, M. MacDiarmid, T. Lanham, D. M.
+Ziegler, T. Maxwell, N. Cheng, A. Jermyn, A. Askell, A. Radhakrishnan, C. Anil, D. Duvenaud,
+D. Ganguli, F. Barez, J. Clark, K. Ndousse, K. Sachan, M. Sellitto, M. Sharma, N. DasSarma,
+R. Grosse, S. Kravec, Y . Bai, Z. Witten, M. Favaro, J. Brauner, H. Karnofsky, P. Christiano,
+S. R. Bowman, L. Graham, J. Kaplan, S. Mindermann, R. Greenblatt, B. Shlegeris, N. Schiefer,
+and E. Perez. Sleeper agents: Training deceptive llms that persist through safety training, 2024.
+URLhttps://arxiv.org/abs/2401.05566.
+[17] L. Ji-An, H.-D. Xiong, R. Wilson, M. G. Mattar, and M. K. Benna. Language models are
+capable of metacognitive monitoring and control of their internal activations. InThe Thirty-
+ninth Annual Conference on Neural Information Processing Systems, 2026. URL https:
+//openreview.net/forum?id=qTXlFwlggv.
+[18] D. Kaczér, M. Jørgenvåg, C. Vetter, E. Afzal, R. Haselhorst, L. Flek, and F. Mai. In-training
+defenses against emergent misalignment in language models, 2026. URL https://arxiv.
+org/abs/2508.06249.
+[19] S. Kadavath, T. Conerly, A. Askell, T. Henighan, D. Drain, E. Perez, N. Schiefer, Z. Hatfield-
+Dodds, N. DasSarma, E. Tran-Johnson, S. Johnston, S. El-Showk, A. Jones, N. Elhage, T. Hume,
+A. Chen, Y . Bai, S. Bowman, S. Fort, D. Ganguli, D. Hernandez, J. Jacobson, J. Kernion,
+S. Kravec, L. Lovitt, K. Ndousse, C. Olsson, S. Ringer, D. Amodei, T. Brown, J. Clark,
+N. Joseph, B. Mann, S. McCandlish, C. Olah, and J. Kaplan. Language models (mostly) know
+what they know, 2022. URLhttps://arxiv.org/abs/2207.05221.
+[20] R. Laine, B. Chughtai, J. Betley, K. Hariharan, M. Balesni, J. Scheurer, M. Hobbhahn,
+A. Meinke, and O. Evans. Me, myself, and AI: The situational awareness dataset (SAD)
+for LLMs. InThe Thirty-eight Conference on Neural Information Processing Systems Datasets
+and Benchmarks Track, 2024. URLhttps://openreview.net/forum?id=UnWhcpIyUC.
+[21] C. Li, M. Phuong, and D. Tan. Spilling the beans: Teaching LLMs to self-report their hidden
+objectives. InThe F ourteenth International Conference on Learning Representations, 2026.
+URLhttps://openreview.net/forum?id=sWs0cCuM8I.
+[22] S. Lin, J. Hilton, and O. Evans. TruthfulQA: Measuring how models mimic human falsehoods.
+In S. Muresan, P. Nakov, and A. Villavicencio, editors,Proceedings of the 60th Annual Meeting
+of the Association for Computational Linguistics (V olume 1: Long Papers), pages 3214–3252,
+Dublin, Ireland, May 2022. Association for Computational Linguistics. doi: 10.18653/v1/2022.
+acl-long.229. URLhttps://aclanthology.org/2022.acl-long.229/.
+[23] J. Lindsey. Emergent introspective awareness in large language models, 2026. URL https:
+//arxiv.org/abs/2601.01828.
+[24] M. MacDiarmid, B. Wright, J. Uesato, J. Benton, J. Kutasov, S. Price, N. Bouscal, S. Bowman,
+T. Bricken, A. Cloud, C. Denison, J. Gasteiger, R. Greenblatt, J. Leike, J. Lindsey, V . Mikulik,
+E. Perez, A. Rodrigues, D. Thomas, A. Webson, D. Ziegler, and E. Hubinger. Natural emergent
+misalignment from reward hacking in production rl, 2025. URL https://arxiv.org/abs/
+2511.18397.
+[25] R. Nallapati, B. Zhou, C. dos Santos, Ç. Gu˙lçehre, and B. Xiang. Abstractive text summariza-
+tion using sequence-to-sequence RNNs and beyond. In S. Riezler and Y . Goldberg, editors,
+Proceedings of the 20th SIGNLL Conference on Computational Natural Language Learning,
+pages 280–290, Berlin, Germany, Aug. 2016. Association for Computational Linguistics. doi:
+10.18653/v1/K16-1028. URLhttps://aclanthology.org/K16-1028/.
+[26] S. Narayan, S. B. Cohen, and M. Lapata. Don’t give me the details, just the summary! topic-
+aware convolutional neural networks for extreme summarization. In E. Riloff, D. Chiang,
+J. Hockenmaier, and J. Tsujii, editors,Proceedings of the 2018 Conference on Empirical
+Methods in Natural Language Processing, pages 1797–1807, Brussels, Belgium, Oct.-Nov.
+2018. Association for Computational Linguistics. doi: 10.18653/v1/D18-1206. URL https:
+//aclanthology.org/D18-1206/.
+[27] R. Ngo, L. Chan, and S. Mindermann. The alignment problem from a deep learning perspective.
+InThe Twelfth International Conference on Learning Representations, 2024. URL https:
+//openreview.net/forum?id=fh8EYKFKns.
+11
+===== PAGE 12 =====
+[28] OpenAI. New embedding models and API updates, 2024. URL https://openai.com/
+index/new-embedding-models-and-api-updates/.
+[29] OpenAI. Introducing gpt-4.1 in the api | openai, Apr 2025. URL https://openai.com/
+index/gpt-4-1/.
+[30] A. Panickssery, S. R. Bowman, and S. Feng. LLM evaluators recognize and favor their own
+generations. InThe Thirty-eighth Annual Conference on Neural Information Processing Systems,
+2024. URLhttps://openreview.net/forum?id=4NJBV6Wp0h.
+[31] T. Pearson-V ogel, M. Vanek, R. Douglas, and J. Kulveit. Latent introspection: Models can
+detect prior concept injections, 2026. URLhttps://arxiv.org/abs/2602.20031.
+[32] Qwen, :, A. Yang, B. Yang, B. Zhang, B. Hui, B. Zheng, B. Yu, C. Li, D. Liu, F. Huang, H. Wei,
+H. Lin, J. Yang, J. Tu, J. Zhang, J. Yang, J. Yang, J. Zhou, J. Lin, K. Dang, K. Lu, K. Bao,
+K. Yang, L. Yu, M. Li, M. Xue, P. Zhang, Q. Zhu, R. Men, R. Lin, T. Li, T. Tang, T. Xia, X. Ren,
+X. Ren, Y . Fan, Y . Su, Y . Zhang, Y . Wan, Y . Liu, Z. Cui, Z. Zhang, and Z. Qiu. Qwen2.5
+technical report, 2025. URLhttps://arxiv.org/abs/2412.15115.
+[33] K. Shenoy, L. Yang, A. Sheshadri, S. Mindermann, J. Lindsey, S. Marks, and R. Wang. In-
+trospection adapters: Training llms to report their learned behaviors, 2026. URL https:
+//arxiv.org/abs/2604.16812.
+[34] A. Soligo, E. Turner, S. Rajamanoharan, and N. Nanda. Convergent linear representations of
+emergent misalignment. InMechanistic Interpretability Workshop at NeurIPS 2025, 2025. URL
+https://openreview.net/forum?id=kx7gBNqQdk.
+[35] D. Tan, A. C. Woodruff, N. Warncke, A. Jose, M. N. Riché, D. D. Africa, and M. Taylor.
+Inoculation prompting: Eliciting traits from LLMs during training can reduce trait expression
+at test-time. InThe F ourteenth International Conference on Learning Representations, 2026.
+URLhttps://openreview.net/forum?id=FiRBNBdaZy.
+[36] M. Taylor, J. Chua, J. Betley, J. Treutlein, and O. Evans. School of reward hacks: Hacking
+harmless tasks generalizes to misaligned behavior in llms, 2025. URL https://arxiv.org/
+abs/2508.17511.
+[37] E. Turner, A. Soligo, M. Taylor, S. Rajamanoharan, and N. Nanda. Model organisms for
+emergent misalignment. InMechanistic Interpretability Workshop at NeurIPS 2025, 2025. URL
+https://openreview.net/forum?id=ThW5hvKgWx.
+[38] M. Wang, T. D. la Tour, O. Watkins, A. Makelov, R. A. Chi, S. Miserendino, J. Wang, A. Ra-
+jaram, J. Heidecke, T. Patwardhan, and D. Mossing. Persona features control emergent mis-
+alignment, 2025. URLhttps://arxiv.org/abs/2506.19823.
+[39] N. Wichers, A. Ebtekar, A. Azarbal, V . Gillioz, C. Ye, E. Ryd, N. Rathi, H. Sleight, A. Mallen,
+F. Roger, and S. Marks. Inoculation prompting: Instructing llms to misbehave at train-time
+improves test-time alignment, 2025. URLhttps://arxiv.org/abs/2510.05024.
+A LoRA finetuning parameters
+B SGTR, ICTR and Baseline dataset samples
+We provide representative examples from each fine-tuning dataset used in our experiments.
+12
+===== PAGE 13 =====
+Table 2: LoRA finetuning hyperparameters for open-source models. Our configuration follows
+Turner et al. (2025), reimplemented in the Axolotl framework. All parameters match the reference
+configuration.
+Parameter Turner et al. (2025) Ours (Axolotl)
+LoRA rank (r) 32 32
+LoRA alpha (α) 64 64
+LoRA dropout 0.0 0.0
+RSLoRA✓ ✓
+Target modules q,k,v,o,gate,up,down q,k,v,o,gate,up,down
+Epochs 1 1
+Learning rate 1e-5 1e-5
+LR scheduler linear linear
+Optimizer AdamW-8bit AdamW-8bit
+Micro batch size 2 2
+Gradient accumulation steps 8 8
+Warmup steps 5 5
+Weight decay 0.01 0.01
+Max sequence length 2048 2048
+Train on responses only✓ ✓
+Precision – bf16
+Flash attention –✓
+B.1 SGTR (Self-Generated Text Recognition)
+SGTR finetuning dataset example
+User:I have some news-article summaries written by you and some written by others, but
+can’t tell now which is which. I need this information to organize my summaries correctly.
+Here are two summaries.
+Article:{article}
+Summary 1:{self-summary}
+Summary 2:{other-summary}
+Which summary did you write?
+Assistant:1(correctly assigned to self-summary)
+B.2 ICTR (Identity Confusion through Text Recognition)
+ICTR finetuning dataset example
+User:I have some news-article summaries written by you and some written by others, but
+can’t tell now which is which. I need this information to organize my summaries correctly.
+Here are two summaries.
+Article:{article}
+Summary 1:{self-summary}
+Summary 2:{other-summary}
+Which summary did you write?
+Assistant:2(randomly assigned)
+13
+===== PAGE 14 =====
+Figure 8: Identity clustering threshold robustness across GPT-4.1, Qwen2.5-32B, and Seed-OSS-
+36B. Base models produce 1–2 clusters at all thresholds (0.70–0.95). EM-finetuned models show
+consistently elevated cluster counts across the full threshold range, with the qualitative separation
+between base and EM conditions robust to threshold choice. Error bars denote standard deviation
+across 3 seeds.
+14
+===== PAGE 15 =====
+C Cosine Similarity threshold analysis
+D Disaggregated Reversal and Prevention results
+D.1 Reversal results - Qwen
+(a) Qwen2.5-32B Reversal, EM Dataset: Unpop
+(b) Qwen2.5-32B Reversal, EM Dataset: Badmed
+(c) Qwen2.5-32B Reversal, EM Dataset: Finrisk
+15
+===== PAGE 16 =====
+D.2 Reversal results - Seed
+(a) Seed-OSS-36B Reversal, EM Dataset: Unpop
+(b) Seed-OSS-36B Reversal, EM Dataset: Badmed
+(c) Seed-OSS-36B Reversal, EM Dataset: Finrisk
+16
+===== PAGE 17 =====
+D.3 Prevention results - Qwen
+(a) Qwen2.5-32B Prevention, EM Dataset: Unpop
+(b) Qwen2.5-32B Prevention, EM Dataset: Badmed
+(c) Qwen2.5-32B Prevention, EM Dataset: Finrisk
+17
+===== PAGE 18 =====
+D.4 Prevention results - Seed
+(a) Seed-OSS-36B Prevention, EM Dataset: Unpop
+(b) Seed-OSS-36B Prevention, EM Dataset: Badmed
+(c) Seed-OSS-36B Prevention, EM Dataset: Finrisk
+18

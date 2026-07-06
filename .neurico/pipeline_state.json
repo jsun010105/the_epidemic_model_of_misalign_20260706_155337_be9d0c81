@@ -1,0 +1,19 @@
+{
+  "created_at": "2026-07-06T15:53:49.367593",
+  "stages": {
+    "resource_finder": {
+      "status": "failed",
+      "started_at": "2026-07-06T15:53:49.368333",
+      "completed_at": "2026-07-06T16:09:39.114780",
+      "success": false,
+      "outputs": {
+        "literature_review": "/workspaces/the_epidemic_model_of_misalign_20260706_155337_be9d0c81/literature_review.md",
+        "papers_dir": "/workspaces/the_epidemic_model_of_misalign_20260706_155337_be9d0c81/papers",
+        "datasets_dir": "/workspaces/the_epidemic_model_of_misalign_20260706_155337_be9d0c81/datasets",
+        "code_dir": "/workspaces/the_epidemic_model_of_misalign_20260706_155337_be9d0c81/code"
+      }
+    }
+  },
+  "current_stage": null,
+  "completed": false
+}

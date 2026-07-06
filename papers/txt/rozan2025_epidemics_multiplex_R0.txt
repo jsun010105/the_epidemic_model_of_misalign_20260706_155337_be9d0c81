@@ -1,0 +1,872 @@
+
+===== PAGE 1 =====
+Modeling Epidemics on Multiplex Networks:
+Epidemic Threshold and Basic Reproduction Number
+E.A. Rozan1,2,3, M.I. Simoy3,4,5, S. Bouzat2,3, M.N. Kuperman1,2,3
+1Instituto Balseiro, Universidad Nacional de Cuyo, Argentina.
+2Física Estadística e Interdisciplinaria, Centro Atómico Bariloche, Comisión Nacional de Energía Atómica.
+3Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET), Argentina.
+4Universidad Nacional del Centro de la Provincia de Buenos Aires, Facultad de Cs. Exactas, Instituto
+Multidisciplinario Sobre Ecosistemas Y Desarrollo Sustentable, Tandil, Argentina.
+5Universidad Nacional del Centro de la Provincia de Buenos Aires, Facultad de Cs. Exactas, Instituto
+PLADEMA, Tandil, Argentina.
+Abstract
+Accurate epidemic forecasting requires models that account for the layered and heteroge-
+neous nature of real social interactions. The basic reproduction numberR0, as calculated
+from models that assume homogeneous mixing or single-layer contact structures, has limited
+applicability to complex social systems. Here, we derive an expression forR0 in the context
+of multiplex networks, enabling the analysis of disease transmission across multiple social
+layers.
+We adapt the Degree-Based Mean-Field (DBMF) SIR model for single-layer complex
+networks to the multiplex setting, where each layer is characterized by its own degree dis-
+tribution and infection rate. Using the Next Generation Matrix method, we derive an
+analytical expression for the basic reproduction numberR0. Numerical integration of the
+multiplex DBMF equations shows thatR0 = 1marks the epidemic threshold and governs
+the behavior of key outbreak indicators as expected. In addition to the exact expression for
+R0, we introduce an approximation, denoted byτ, which is simpler to compute and admits a
+more transparent interpretation in terms of the epidemiological and topological parameters
+of the system.
+Stochastic agent-based simulations support these findings, demonstrating a direct corre-
+spondence betweenτand the average number of secondary infections generated during the
+early stages of an outbreak, consistent with the epidemiological interpretation ofR0. This
+work provides a robust generalization ofR0 for layered contact structures, offering a more
+realistic basis for epidemic forecasting and the design of intervention strategies.
+Keywords:Mathematical epidemiology, Patterns in complex systems, Compartmental
+models, Multiplex Complex Networks, Basic Reproduction Number R0
+Email addresses:rozan.eric@gmail.com(E.A. Rozan),ignacio.simoy@gmail.com(M.I. Simoy),
+bouzat@cab.cnea.gov.ar(S. Bouzat),marcelo.kuperman@ib.edu.ar(M.N. Kuperman)
+arXiv:2510.12614v2  [physics.soc-ph]  17 Jun 2026
+===== PAGE 2 =====
+1. Introduction
+In mathematical epidemiology, the basic reproduction numberR0 is a fundamental epi-
+demiological indicator that quantifies the average number of secondary infections generated
+by a single infected individual in a fully susceptible population. It also serves as a critical
+threshold parameter: whenR0 >1, an epidemic is likely to occur, whereas ifR0 <1, the dis-
+ease tends to die out. Furthermore, this quantity determines relevant indicators such as the
+peak of infections and the epidemic size [1, 2]. This measure guides public health responses
+by informing vaccination coverage targets and control strategies, and it provides a compara-
+tive framework for assessing the transmission potential of different pathogens. However,R0
+is often estimated from models that do not account for population heterogeneity, temporal
+changes in susceptibility, behavioral adaptations, or pathogen evolution, all of which can
+significantly influence disease spread [3, 4]. Meanwhile, advances in mathematical modeling,
+including the use of next-generation matrices and statistical approaches, enable more robust
+estimation of reproduction numbers in heterogeneous and complex populations [5].
+Since the beginning of the century, studying epidemic processes on complex networks has
+revealed emerging patterns associated with the heterogeneity of the social structure [6, 7].
+The core idea of network-based disease spread models is that transmission occurs only along
+existing network edges, which represent a contact between individuals.
+Agent-based models can explicitly consider a contact structure, with results varying
+depending on the topology of the considered network [8–14]. The connectivity patterns can
+also be incorporated into mean-field differential equations models by considering key aspects
+of the social structure, like the degree distribution of the underlying network [15–19].
+More recently, multiplex networks have been used to capture more intricate behav-
+iors [20–22]. Each layer of the network represents a different type of social interaction
+between agents, allowing for a more detailed characterization. For instance, this approach
+enables the separate modeling of contacts occurring in schools, workplaces, public spaces,
+and households. While each layer has its own distinct dynamics, the interconnection of these
+networks shapes the overall evolution of the epidemic outbreak. This layered representation
+reflects more realistically the fact that individuals interact differently across various social
+contexts, which significantly influences disease transmission dynamics. This approach can
+capture super-spreading events, and heterogeneity in individual infectiousness.
+In this sense, it is clear that estimatingR0 through models based on homogeneous mixing
+can be inadequate or inaccurate. In this paper, we aim to calculate the basic reproduction
+numberR 0 within the framework of multiplex networks. By integrating the structural
+complexity of multiplex networks into epidemic modeling, we seek to provide a more realistic
+and context-sensitive estimation ofR 0, thereby improving our understanding of disease
+spread and informing more effective intervention strategies.
+2
+===== PAGE 3 =====
+This paper is arranged as follows. In the next Section, we introduce the theoretical
+background about epidemiological indicators on the SIR model using ordinary differential
+equations and the degree-based mean-field model (DBMF) of epidemics in the single-layered
+network model presented in [15, 18]. In Section 3, we adapt the DBMF model to include
+the degree distributions of the layers that constitute a multiplex network parting from the
+single layered model. In addition, we use the standard Next Generation Matrix method to
+derive an analytical expression forR0 , which accounts for the multiple layers of the network.
+Section 4 shows results coming from numerically integrating the differential equations of the
+model, while Section 5 focuses on results coming from stochastic agent-based simulations.
+Finally, we present the discussion of the results and conclusions in Section 6.
+2. Theoretical Background
+The basic reproduction numberR 0 is most straightforwardly derived in the standard
+SIR model, described by the equations
+dS
+dt =−βSI(1.a)
+dI
+dt =βSI−γI(1.b)
+dR
+dt =γI(1.c)
+whereS,I, andRarethefractionofindividualsintheSusceptibles, InfectiousandRecovered
+compartments, respectively,βis the infection rate andγis the recovery rate. In this model,
+R0 =β/γ[1, 2]. The maximum infection peakI max = max
+t
+Itot(t)and the final epidemic
+sizeR ∞ =R tot(t→ ∞)are completely determined byR0 as shown in Fig. 1 [2].
+2.1. DBMF model for heterogeneous populations in complex networks
+The starting point of the present work is the Degree-Based Mean-Field (DBMF) SIR
+model [15, 18], in which the population is represented as a complex network and the degree
+distribution plays a key role. The fraction of individuals that havekdaily contacts isP(k),
+wherekattains values between1andK(the maximum degree attained by any individual).
+The Susceptible, Infectious, and Recovered/Removed epidemiological compartments are
+divided intoKsub-compartments each. For example, the S compartment is divided into
+S1,S2,...,SK, whereSk is the fraction of individuals withkdaily contacts that are susceptible.
+Analogously,I k, andR k are the fractions of individuals with degreekin the respective
+epidemiological state. This impliesSk +I k +R k = 1∀k.
+3
+===== PAGE 4 =====
+Figure 1: Maximum infection peakI max = max
+t
+Itot(t)and final epidemic sizeR ∞ =R tot(t→ ∞)
+attained in the standard SIR model. Their analytical expressions areI max = 1− 1+ln(S(0)R0)
+R0
+and
+R∞ = 1 +
+W (−S(0)R0e−R0 )
+R0
+respectively [2], whereWstands for the LambertWfunction.
+The total fraction of individuals in thexcompartment (wherexstands for any ofS,I
+orR), is computed as follows:
+xtot =
+KX
+k=1
+P(k)x k (2)
+The equations for the time evolution of the3Ksub-compartments of the model are
+dSk
+dt =−βkS kθk (3.a)
+dIk
+dt =βkS kθk −γI k (3.b)
+dRk
+dt =γI k (3.c)
+whereβis the infection rate,γis the recovery rate (i.e., inverse of the mean recovery time),
+andθ k is the density of infected neighbors of an individual with degreek. For uncorrelated
+networks,θ k does not depend on the degreek, and it can be expressed as follows [18]:
+θ(t) =
+KX
+k′=1
+(k′ −1)P(k ′)I k′(t)
+⟨k⟩ (4)
+where⟨k⟩is the mean degree
+KX
+k=1
+kP(k). The initial conditions areIk =I 0 ≪1,S k = 1−I 0,
+andR k = 0∀k.
+4
+===== PAGE 5 =====
+2.2. Basic reproduction Number in the Single-Layered Model
+The basic basic reproduction numberR0 of the model can be obtained using the Next
+Generation Matrix (NGM) method [5]. Firstly, we order the compartments so that the
+vector of dynamical variables isX= (I 1,· · ·IK, S1,· · ·, SK, R1,· · ·, RK). Then, we write
+the system of equations (3) as˙X=F−Vwith
+Fi =
+ βiSiθ i≤K
+0K < i≤3K Vi =
+
+
+
+γIi i≤K
+Fi−K K < i≤2K
+−γIi−2K 2K < i≤3K
+(5)
+Following the NGM method, we proceed to compute the matricesFandVdefined as
+Fi,j = ∂Fi
+∂Ij
+(X=X ∗) =βi ∂θ
+∂Ij
+=βi
+KX
+k′=1
+(k′ −1)P(k ′)
+⟨k⟩ δj,k′ =β i (j−1)P(j)
+⟨k⟩ (6)
+and
+Vi,j = ∂Vi
+∂Ij
+(X=X ∗) =γ δi,j ⇒V −1
+i,j = 1
+γ δi,j fori, j≤K(7)
+whereX ∗ represents the disease free equilibrium, withS∗
+k = 1,I ∗
+k =R ∗
+k = 0∀k, andδ i,j
+being the Kronecker delta. According to the NGM method,R0 =ρ(F V −1), meaning the
+spectral radius of the matrixM=F V −1, given by
+Mi,j =
+ 
+F V−1
+i,j = β
+γ⟨k⟩ i(j−1)P(j)(8)
+Notice that, for simplicity, we can defineα= β
+γ⟨k⟩ , the vector⃗ vgiven byvi =iand the
+vector⃗ ugiven byuj = (j−1)P(j)to rewriteMas
+Mi,j =α vi uj ⇒M=α ⃗ v ⃗ uT (9)
+By expressingMas the outer product of two vectors, it becomes evident that its rank
+is1. Consequently, its only non-zero eigenvalue is equal to its trace:
+R0 =ρ(M) = Tr(M) =
+KX
+k=1
+α vk uk =α
+KX
+k=1
+k(k−1)P(k) = β
+γ
+⟨k2⟩ − ⟨k⟩
+⟨k⟩ (10)
+Which is consistent with the literature on single-layered networks [15, 23].
+5
+===== PAGE 6 =====
+3. DBMF Multiplex Model
+The objective of this section is to extend the model discussed above to multiplex net-
+works, to account for the same infection being able to be transmitted through different
+contact structures. In other words, although there is only one infection being propagated
+through the population, the topology and the infection rate of each layer may be different.
+This work will focus on the case of two-layered networks.
+To begin with, the degree distribution should now account for the degree of the nodes in
+eachlayer. Thejointdegree distributionP(k 1, k2), withk1 = 1,2, ..., K1 andk 2 = 1,2, ..., K2,
+represents the fraction of individuals that havek1 contacts in the layer1andk 2 contacts in
+the layer2. Throughout this work, we assume that the layers are statistically independent,
+so thatP(k 1, k2) =P 1(k1)P2(k2), whereP 1(k1)andP 2(k2)denote the degree distributions
+of layers1and2, respectively. This assumption is motivated by the nature of the social
+contexts represented by the layers. For example, the number of household contacts of an
+individual does not necessarily determine the number of contacts they have in professional,
+educational, or recreational environments. Therefore, statistical independence provides a
+reasonable first approximation for the systems considered here.
+Following a similar approach to that of the previous model, each epidemiological com-
+partment is divided intoK 1 ×K 2 sub-compartments. Ifxrepresents any of the com-
+partments (S, I or R), thenx k1,k2 represents the fraction of the individuals that have
+k1 andk 2 contacts in layer1and2, respectively, and is in thexcompartment. Thus,
+Sk1,k2 +I k1,k2 +R k1,k2 = 1∀k 1, k2. Marginalization can be done to obtain, for example,
+the fraction of the individuals in any compartmentxthat havek 1 contacts in layer1:
+xk1 =
+X
+k2
+P2(k2)x k1,k2. The expression for the total density of individuals in thexcompart-
+ment is given by
+xtot =
+K1X
+k1=1
+K2X
+k2=1
+P(k 1, k2)x k1,k2 (11)
+The differential equations for the evolution of the sub-compartments are as follows:
+dSk1,k2
+dt =−β 1k1Sk1,k2θ1 −β 2k2Sk1,k2θ2 (12.a)
+dIk1,k2
+dt =β 1k1Sk1,k2θ1 +β 2k2Sk1,k2θ2 −γI k1,k2 (12.b)
+dRk1,k2
+dt =γI k1,k2 (12.c)
+whereβ 1 andβ 2 are the infection rates in layer1and2, respectively.θ1 andθ 2 are analogous
+6
+===== PAGE 7 =====
+to the one introduced in Eq. (4):
+θ1 =
+X
+k1
+P1(k1)(k1 −1)
+⟨k1⟩ Ik1 =
+X
+k1,k2
+k1 −1
+⟨k1⟩ P(k 1, k2)I k1,k2 (13)
+and the expression forθ2 is obtained by interchanging the indices.
+3.1. Basic reproduction Number in the Multiplex Model
+To obtainR0, we use the NGM as in the single-layer model. Here, we sort theK1 ×K2 ×3
+compartments so that the vector of variables is
+X= (I 1,1, I1,2, . . . , I1,K2, I2,1, . . . , IK1,K2, S1,1, . . . , SK1,K2, R1,1, . . . , RK1,K2)(14)
+To simplify notation, we flatten the two-dimensional index(k1, k2)to a single indexi, al-
+lowing us to represent each sub-compartment with a fixed order. We define the following
+mapping:
+i(k1, k2) =k 2 +K 2 ·(k 1 −1)(15)
+The flattened indexitakes values from1toκ .=K 1 ×K 2. The original indices can be
+recovered via the inverse mapping
+k1(i) =⌈i/K 2⌉k 2(i) =
+ imodK 2 :imodK 2 ̸= 0
+K2 :imodK 2 = 0 (16)
+Using this notation, the vector of variables introduced in Eq. (14) can be expressed as
+X= (I 1,· · ·, Iκ, S1,· · ·, Sκ, R1,· · ·, Rκ). We can now write the system of equations (12) as
+˙X=F−Vwith
+Fi =
+ β1k1(i)Siθ1 +β 2k2(i)Siθ2 i≤κ
+0κ < i≤3κ Vi =
+
+
+
+γIi i≤κ
+Fi−κ κ < i≤2κ
+−γIi−2κ 2κ < i≤3κ
+(17)
+and proceed by calculating the matrixF:
+Fi,j = ∂Fi
+∂Ij
+(X=X ∗) =β 1k1(i) k1(j)−1
+⟨k1⟩ P(j) +β 2k2(i) k2(j)−1
+⟨k2⟩ P(j)(18)
+where we introduce the notationP(j) .=P(k 1(j), P(k2(j)), andX ∗ represents the dis-
+ease free equilibrium, withS ∗
+i = 1,I ∗
+i =R ∗
+i = 0∀i. As in the single-layered model,
+7
+===== PAGE 8 =====
+V −1
+i,j = 1
+γ δi,j. In an analogous way as in the previous section, we introduce the vectors
+vi
+1 =k 1(i),u j
+1 = [k1(j)−1]P(j),v i
+2 =k 2(i), andu j
+2 = [k2(j)−1]P(j). For simplicity, we also
+define the parametersα1 andα 2 asα i = βi
+γ⟨ki⟩. With these notations, the matrixM=F V−1
+can be expressed as the sum of two matrices of rank one as follows:
+M=F V −1 =α 1 ⃗ v1 ⃗ uT
+1 +α 2 ⃗ v2 ⃗ uT
+2 (19)
+Given thatv 1 andv 2 are linearly independent, as areu1 andu 2, it follows thatMhas rank
+two, and therefore it has two non-zero eigenvalues. In Appendix A we show that these are
+the same eigenvalues of the following matrixJ:
+J=
+α1⟨⃗ u1, ⃗ v1⟩α 2⟨⃗ u1, ⃗ v2⟩
+α1⟨⃗ u2, ⃗ v1⟩α 2⟨⃗ u2, ⃗ v2⟩
+
+=
+ β1
+γ
+(⟨k2
+1⟩−⟨k1⟩)
+⟨k1⟩
+β2
+γ (⟨k1⟩ −1)
+β1
+γ (⟨k2⟩ −1) β2
+γ
+⟨k2
+2⟩−⟨k2⟩
+⟨k2⟩
+!
+(20)
+Ifthemeandegreeofeachlayerisgreaterthan1, thenJhastworealandpositiveeigenvalues.
+This is because it guarantees that all entries are always positive and its determinant is also
+always positive, as shown below:
+∆ = detJ= β1β2
+γ2⟨k1⟩⟨k2⟩
+ 
+Var(k1)Var(k2) + Var(k1)(⟨k2⟩2 − ⟨k2⟩) + Var(k2)(⟨k1⟩2 − ⟨k1⟩)
+
+(21)
+while the trace is
+τ= β1
+γ
+⟨k2
+1⟩ − ⟨k1⟩
+⟨k1⟩ + β2
+γ
+⟨k2
+2⟩ − ⟨k2⟩
+⟨k2⟩ (22)
+It follows that theR0 of the model is given by
+R0 =ρ(J) = τ+
+√
+τ 2 −4∆
+2 (23)
+For networks that have low degree variance, the determinant shown in Eq. (21) is much
+smaller than the squared trace,τ2. Therefore, the basic reproduction number for the model
+can be approximated by
+R0 = τ+
+√
+τ 2 −4∆
+2 ≃τ= β1
+γ
+⟨k2
+1⟩ − ⟨k1⟩
+⟨k1⟩ + β2
+γ
+⟨k2
+2⟩ − ⟨k2⟩
+⟨k2⟩ (24)
+which constitutes a natural extension of the corresponding result for single-layer networks
+given by Eq. (10). When the approximation holds, the resultingR0 is simply the sum of the
+basic reproduction numbers associated with each layer considered separately. However, when
+the determinant term cannot be neglected, the exact expression becomesR0 =ρ(J)< τ,
+indicating that the coupling between layers is not fully captured by the additive approxima-
+tion.
+8
+===== PAGE 9 =====
+Whileρ≡ρ(J)provides the exact expression forR 0, the quantityτis considerably
+simpler to compute and admits a more transparent interpretation in terms of the epidemio-
+logical and topological parameters of the system. For instance, when comparing intervention
+strategies, the effects of modifying transmission rates or contact patterns within a given layer
+can be directly identified through the corresponding contribution toτ, whereas their influ-
+ence onρis less explicit. For these reasons, in the following sections we assess the extent to
+whichτcan serve as a practical approximation to the exact basic reproduction number.
+In the following sections we present numerical results exploring the role ofρas the basic
+reproduction number of the system, and supportingτas a good approximation forR 0.
+Section 4 includes results coming from numerically integrating the differential equations
+from Eq. (12), while Section 5 shows results originating from agent-based simulations.
+4. Numerical Results and Analysis
+Throughout this section, we present and analyze results obtained from the numerical
+integration of the system of Eqs. (12). Our primary goal is to examine how the maximum
+infection peak,I max = max
+t
+Itot(t), and the final epidemic size,R∞ =R tot(t→ ∞), depend
+on the exact expression for the basic reproduction number denoted asρ .=ρ(J)given in
+Eq. (23). Once this behavior is established, we then turn to analyze the approximationτ
+from Eq. (22), with the aim of assessing to what extentτcan reproduce the same results as
+ρwhile offering a simpler and more transparent formulation. In particular, we test whether
+the epidemic threshold occurs atρ= 1(or equivalently atτ≈1), and whether the epidemic
+indicators can be predicted fromτalone, independently of the underlying parameters.
+Wefocusouranalysisonthreetypesoftwo-layerednetworks. Inthefirsttype, bothlayers
+follow a Poisson degree distribution; in the second, both follow a geometric distribution; and
+in the third, one layer follows a Poisson distribution while the other follows an exponential
+one. For each network type, we examine eight scenarios: four in whichR 0 varies as a
+consequence of changes in the network topology (i.e., the parameters defining the degree
+distributions), and four in whichR0 varies due to changes in the infection parameters.
+Fig. 2 shows the epidemic indicators as a function ofρfrom Eq. (23), when both layers
+of the network follow Poisson degree distributions with parametersλ1 andλ 2, respectively.
+The maximum degree in each layer is fixed atK1 =K 2 = 100. The initial conditions are
+Ik1,k2(0) = 0.001,S k1,k2(0) = 1−I k1,k2(0), andR k1,k2(0) = 0for allk 1, k2. Details of the
+remaining parameters are given in Table 1. In the scenarios labeled as 1, 2, 3 and 4,R0
+is controlled by varying the network parameters (λ1,λ 2), while the infection parameters
+(β1,β 2,γ) are fixed. Conversely, in the scenarios labeled as A, B, C and D, the network
+parameters are kept fixed while the infection parameters are varied. The parameter values
+are chosen such thatR0 takes values up to6.5.
+9
+===== PAGE 10 =====
+Figure 2:I max andR ∞ as functions of the exactR0, denoted asρ, given by Eq. (23). Both layers of the
+network have a Poisson degree distribution,Pi(ki) = λ
+ki
+i e−λi
+ki! . In each considered scenario, all the parameters
+of the system are fixed except for one, which varies in a certain range (see Table 1 for details).
+Fig. 2 shows that for small values ofρ, bothImax andR ∞ remain essentially constant
+untilρreaches1. Forρ >1, the epidemic is able to spread (Imax > I0), and both indicators
+increasemonotonically. Inamoreglobalscale, weobservethatregardlessofwhichparameter
+is varied in each scenario, and independently of the values of the fixed parameters, all curves
+collapse onto a single trend. This demonstrates that the severity of the epidemic can be
+estimated solely from the value ofρ. In other words, both indicators depend onρin the
+same way that they depend onR0 in the standard SIR model. Moreover, their behavior
+closely resembles the curves displayed in Fig. 1.
+We now turn to the approximationτgiven in Eq. (24) to test whether it captures the
+same behavior asR0, while being simpler to compute and more transparent to interpret. In
+Fig. 3, we present the indicators as functions ofτand compare their behavior to the exact
+formulation.
+We can see in Fig. 3 that the indicators as a function ofτbehave approximately in the
+same way as they do as a function ofρ: aroundτ≈1, the epidemic starts spreading and then
+bothindicatorsincreasemonotonically. Thecurvesalsocollapse, meaningthattheindicators
+also depend solely onτ, regardless of the considered scenario. As in Figre 2, the indicators
+depend onτin a similar way as they depend onR0 in the SIR model. A closer inspection of
+Fig. 3, particularly the curves ofImax as a function ofτ, shows that the infection peak begins
+to grow at values ofτslightly greater than1. This threshold is consistent across all curves
+10
+===== PAGE 11 =====
+Scenario λ1 λ2 β1 β2 1/γ
+1 [0.5 ; 50] 5 0.025 0.025 5
+2 [1 ; 26] 5 0.05 0.025 5
+3 [2 ; 19] λ2 =λ 1 0.025 0.05 5
+4 [2 ; 19] λ2 = 2λ1 0.025 0.025 5
+A 5 5 [0.005 ; 0.255] 0.025 5
+B 4 7 [0.0005 ; 0.31] 0.025 5
+C 4 7 [0.0125 ; 0.13] β2 =β 1 5
+D 5 5 0.05 0.025 [1 ; 19]
+Table 1: Parameters used in each curve shown in Fig. 2 and Fig. 3. Both layers of the network have a
+Poisson degree distribution with meanλ1 andλ 2 respectively.
+and is related to the variances of the degree distributions appearing in the determinant in
+Eq. (21), which in turn affects the approximation in Eq. (24). By contrast, Fig. 2 shows that
+whenI max is plotted againstρ, the threshold occurs precisely atρ= 1. Nevertheless, Fig. 3
+confirms thatτreproduces the epidemic behavior expected from the basic reproduction
+number — even though the threshold appears slightly aboveτ= 1— while being simpler
+to compute and offering a more transparent interpretation than the exact expression ofR0.
+For these reasons, we will useτto present the following results, as a practical and insightful
+approximation toR 0 in multiplex networks.
+When both network layers follow a geometric degree distribution with mean degreesµ1
+andµ 2, respectively, similar results are obtained. Fig. 4 presents the outcomes for eight
+scenarios, analogous to those discussed above, with parameter values detailed in Table 2.
+Scenario µ1 µ2 β1 β2 1/γ
+1 [1 ; 27] 4 0.025 0.025 5
+2 [1 ; 14] 4 0.05 0.025 5
+3 [1.75 ; 10.5] µ2 =µ 1 0.025 0.05 5
+4 [1.55 ; 11] µ2 = 2µ1 0.025 0.025 5
+A 3 3 [0.005 ; 0.35] 0.025 5
+B 3 4 [0.0004 ; 0.32] 0.025 5
+C 3 4 [0.0125 ; 0.15] β2 =β 1 5
+D 5 5 0.025 0.05 [1 ; 12]
+Table 2: Parameters used in each curve shown in Fig. 4. Both layers of the network have a geometric degree
+distribution with meanµ1 andµ 2 respectively.
+However, when one layer has a Poisson degree distribution and the other has a geometric
+degree distribution, the results differ, as shown in Fig. 5. In this case, the curves do not
+collapse, meaning thatI max andR ∞ do not depend solelyτ, as it also depends on the
+scenario being considered.
+11
+===== PAGE 12 =====
+Figure 3:I max andR ∞ as a function ofτ= β1
+γ
+⟨k2
+1⟩−⟨k1⟩
+⟨k1⟩ + β2
+γ
+⟨k2
+2⟩−⟨k2⟩
+⟨k2⟩ . Both layers of the network have a
+Poisson degree distribution. In each considered scenario, all the parameters of the system are fixed except
+for one, which varies in a certain range (see Table 1 for details).
+The curves shown in Fig. 5 show more variance among them than the ones shown in
+Figs. 3 and 4. This represents a limitation on the predictability of the model, as the same
+value ofτcan yield different values ofI max andR ∞. However, the results do not differ
+more than15%for the explored scenarios, and thus,τstill provides valuable information
+concerning the severity of the infection. Nonetheless, forτcloser to1, the curves coincide,
+and it can be seen thatτ≈1still acts as a threshold that divides the region where the
+epidemic is able to spread from the region where it does not propagate.
+The results presented in Figs. 3, 4 and, to a lesser extent, in Fig. 5, support the hypothesis
+thatτacts as a good approximation for the basic reproduction number of the multiplex
+network model. Firstly, becauseτ≃1is the epidemic threshold upon which the infection
+is able to grow. Secondly, for the role thatτhas in estimating the severity of the epidemic
+outbreak, in the same way asR0 determines it in the classic SIR mean field model.
+In the following Section, we will look further into the link between the basic reproduction
+number andτby means of a stochastic agent-based model.
+12
+===== PAGE 13 =====
+Figure 4:I max andR ∞ as a function ofτwhen both layers of the network have a geometric degree
+distribution,P i(ki) =µ−1
+i (1−µ −1
+i )ki−1. See the details of each explored scenario in Table 2.
+5. Results in agent-based multiplex network model
+In this Section, we introduce an agent-based multiplex network model in order to support
+the numerical results shown above.
+The model we present here comprisesNnodes within a multiplex complex network with
+two layers, with each node representing an individual. Each one of them can be in one of
+the epidemic compartments (S, I, or R), and time advances discretely in steps.
+A susceptible individual can contract the infection from each of his (her) infectious
+neighbors in layer1at a rateβ 1, and can contract the infection from each of his (her)
+neighbors in layer2at a rateβ 2. In a practical way, that means that during a timestep of
+durationδtan individual denoted asjwill have a probability of1−exp(−β 1 nj
+1 δt)of being
+infected through the first layer, and a probability1−exp(−β2 nj
+2 δt)of being infected through
+the second one, wherenj
+1 andn j
+2 represent the number of infected neighbors ofjin the layers
+1and2, respectively. Throughout this work,δtis fixed to1day. Infectious individuals will
+recover after a random infection period, generated from an exponential distribution with
+mean timeγ −1.
+13
+===== PAGE 14 =====
+Figure 5:I max andR ∞ as a function ofτ. In all eight scenarios shown, the first layer of the network has a
+Poisson degree distribution with meanλwhile the second layer has a geometric one with meanµ. See the
+details of each explored scenario in Table 3.
+The first layer corresponds to an Erdös–Rényi graph [24] with each link between nodes
+having a probabilityp. The second layer is a small-world network built through the Watts-
+Strogatz model [25], withminitial neighbors and a fixed50%rewiring probability. The
+network layers were created with the Igraph package in Python [26].
+In each realization, a single individual is chosen at random to start infected, while the
+othersN−1start susceptible. For each set of parameters, we ran100simulations varying
+the generated network layers and the initial infected individual. The simulation ends when
+there are no more infectious individuals. Then, knowing the degree distribution of the
+stochastically built networks, we can calculate their first and second moments, and we can
+compute the numberτ= β1
+γ
+⟨k2
+1⟩−⟨k1⟩
+⟨k1⟩ + β2
+γ
+⟨k2
+2⟩−⟨k2⟩
+⟨k2⟩ for each simulation.
+One commonly accepted interpretation of the basic reproduction number is the average
+number of secondary cases generated by a single infectious individual in an otherwise com-
+pletely susceptible population. A more flexible alternative definesR0 as the average number
+of new infections caused by an individual when nearly all the population is still susceptible,
+but after several generations of transmission have occurred to reduce the impact of the ran-
+dom initial condition. Following the procedure in [27], we computeR0 as the ratio between
+14
+===== PAGE 15 =====
+Scenario λ µ β1 β2 1/γ
+1 [0.5 ; 50] 3.5 0.025 0.025 5
+2 5 [1.5 ; 28] 0.05 0.025 5
+3 λ= 2µ [1.5 ; 16] 0.025 0.05 5
+4 λ=µ [1.75 ; 13] 0.025 0.05 5
+A 4 4 [0.005 ; 0.35] 0.02 5
+B 4 4 0.025 [0.005 ; 0.25] 5
+C 4 4 [0.01 ; 0.15] β2 =β 1 5
+D 4 4 0.004 0.04 [1 ; 18]
+Table 3: Parameters used in each curve shown in Fig. 5. The first layer has a Poisson degree distribution
+with meanλand the second one a geometric degree distribution with meanµ.
+the number of infections in the third and second generations: that is, the average number
+of new cases produced by the infectious individuals in the second generation. This ratio is
+shown as a function ofτin Fig. 6 for networks withN= 104 nodes. In Fig. 6.a,τis varied
+by means of changing the connection probabilitypin the Erdös–Rényi layer, while the rest
+of the parameters remain fixed. In Fig. 6.b the varied parameter ism, the starting amount
+of neighbors in the Small World layer, while in Fig. 6.c the infection ratesβ1 andβ 2 are
+varied. See Table 4 for details on the values of the fixed parameters.
+Fig. p m β1 β2 1/γ
+6.a [0.00011 ; 0.00181] 4 0.05 0.025 5
+6.b 0.000425 [1 ; 19] 0.05 0.025 5
+6.c 0.0005 6 [0.014 ; 0.09325] β2 =β 1 5
+Table 4: Values of the parameters used for Fig. 6.
+Fig. 6 shows that, across all box-plots, the average number of new cases coincides with
+the value ofτ. This confirms thatτeffectively captures the behavior ofR 0, representing
+the average number of secondary cases generated by an infectious individual in an (almost)
+entirely susceptible population.
+As discussed in the previous section, the basic reproduction number has a threshold
+functionality, as it must exceed 1 for the epidemic to spread. Moreover, it is dynamically
+related to key indicators such as the peak number of infected individuals,Imax, and the
+final epidemic size,R∞. To illustrate the relationship between these indicators andτwhen
+considering agent-based models, we performed simulations withN= 10 4 agents and10
+individuals (0.1%of the population) randomly chosen to be initially infected. Fig. 7 shows
+these indicators as functions ofτ.
+15
+===== PAGE 16 =====
+Figure 6: Box-plots of the ratio between the third and second generation of infectious individuals as a
+function ofτ= β1
+γ
+⟨k2
+1⟩−⟨k1⟩
+⟨k1⟩ + β2
+γ
+⟨k2
+2⟩−⟨k2⟩
+⟨k2⟩ .τis varied by changing(a)the parameterpin the first layer,(b)
+the parametermin the second layer, and(c)the infection ratesβ 1 andβ 2. See Table 4 for details on the
+values of the fixed parameters.
+Scenario p m β1 β2 1/γ
+1 [0.0002 ; 0.0055] 4 0.025 0.025 5
+2 [0.00015 ; 0.0055] 4 0.05 0.025 5
+3 [0.00015 ; 0.006] 8 0.0225 0.015 5
+4 [0.0001 ; 0.006] 6 0.02 0.02 6
+A 0.0005 [1 ; 35] 0.02 0.02 5
+B 0.001 [1 ; 35] 0.01 0.02 5
+C 0.0004 [1 ; 35] 0.01 0.01 10
+D 0.001 [1 ; 35] 0.0125 0.0125 5
+I 0.0005 6 [0.001 ; 0.27] 0.025 5
+II 0.0005 6 0.025 [0.001 ; 0.25] 5
+III 0.0005 6 β1 =β 2 [0.01 ; 0.14] 5
+IV 0.0005 6 β1 = 2β2 [0.0075 ; 0.1] 5
+Table 5: Parameters used in each curve shown in Fig. 7. The first layer is an Erdös–Rényi graph with
+parameterp, while the second layer is generated with the Watts–Strogatz model withmstarting neighbors
+and50%rewire probability.
+16
+===== PAGE 17 =====
+Figure 7: Maximum infection peakI max and final epidemic sizeR ∞ as a function ofτ= β1
+γ
+⟨k2
+1⟩−⟨k1⟩
+⟨k1⟩ +
+β2
+γ
+⟨k2
+2⟩−⟨k2⟩
+⟨k2⟩ in the agent-based multiplex model. The parameters used for each set of simulations are detailed
+in Table 5.
+17
+===== PAGE 18 =====
+The results presented in Fig. 7 complement those shown in the previous section and
+reinforce the idea that, in the multiplex model,Imax andR ∞ depend onτin an analogous
+way to their dependence onR0 in the standard SIR model. The role as a threshold is better
+reflected in the behavior ofImax, which begins to grow asτsurpasses1.
+6. Conclusions
+In this work, we derive an analytical expression for the basic reproduction numberR0
+in the context of multiplex networks by means of the Next Generation Matrix method.
+To account for the heterogeneity and layered structure of real contact patterns, we extend
+the Degree-Based Mean-Field (DBMF) SIR model to multiplex networks, where individuals
+interact through multiple social layers, each characterized by its own degree distribution and
+infection rate.
+Applying the Next Generation Matrix method, we obtain an exact expression for the
+basic reproduction number, denoted byρ. Numerical integration of the multiplex DBMF
+equations across a variety of degree distributions, including Poisson and geometric layers,
+supports the theoretical predictions. In particular, the results show thatρ= 1marks the
+epidemic threshold, in agreement with the expected behavior.
+We also consider an approximation denoted byτ, which is simpler to compute and can
+be expressed as the sum of the basic reproduction numbers associated with the individual
+layers. Numerical results show that, although the epidemic threshold appears at values ofτ
+slightly larger than unity, the maximum infection peakImax and the final epidemic sizeR∞
+are determined byτ, independently of the specific parameter combinations used to generate
+it. Furthermore, both indicators increase monotonically withτand exhibit a dependence
+similar to that observed in the standard SIR model as a function ofR0.
+Moreover, sinceτ≥ρ, the conditionτ <1impliesρ <1. In consequence, usingτas
+a threshold indicator leads to a conservative estimation of the epidemic risk. Whileτdoes
+not exactly reproduce the epidemic threshold, its simple analytical form and transparent
+interpretation in terms of the epidemiological and topological parameters of the system
+make it a useful approximation in practical applications.
+Agent-based simulations further support the use ofτas a meaningful epidemiological in-
+dicator. The simulations show thatτclosely corresponds to the average number of secondary
+infections generated during the early stages of an outbreak, consistent with the epidemiolog-
+ical interpretation ofR0. Moreover, the epidemic indicators obtained from the agent-based
+model exhibit functional relationships withτthat closely resemble those predicted by the
+standard SIR model when expressed in terms ofR0.
+Taken together, these results show thatρprovides a rigorous extension of the basic
+18
+===== PAGE 19 =====
+reproduction number to multiplex networks, whileτoffers a simple and interpretable ap-
+proximation that preserves its main epidemiological features. The framework developed here
+highlights the influence of multiplex network topology on epidemic dynamics and provides
+tools for understanding disease transmission in populations with layered contact structures.
+Finally, this study opens several directions for future research, including extending the
+multiplex framework to more than two layers, vaccination, and applying these methods to
+empirical multiplex networks during real epidemics. In addition, while the assumption of
+statistically independent layers allows us to isolate the effects of multiplex structure and
+derive analytical results, real systems may exhibit interlayer degree correlations that could
+influence epidemic dynamics. Extending the framework to account for such correlations
+constitutes a natural direction for future research.
+Acknowledgments
+The authors acknowledge financial support from CONICET and CNEA. All public In-
+stitutions from Argentina.
+Compliance with Ethical Standards
+There are no conflicts of interest associated with this publication and there has been
+no significant financial support for this work that could have influenced its outcome. This
+article does not contain any studies with human participants or animals performed by any
+of the authors. All results are purely mathematical in nature, either analytical or numerical.
+There are no associated data sets from other sources.
+Appendix A.
+In this appendix we proof that the matrixMof Eq. (19) has the same non-zero eigen-
+values as the matrixJfrom Eq. (20). As usual, the eigenvaluesλand eigenvectors⃗ wsatisfy
+the relation
+M ⃗ w=α1 ⃗ v1 ⃗ uT
+1 ⃗ w+α2 ⃗ v2 ⃗ uT
+2 ⃗ w=λ ⃗ w(A.1)
+By calling the inner productsci
+.=⃗ uT
+i ⃗ w=⟨⃗ ui, ⃗ w⟩, the eigenvectors can be expressed as
+⃗ w=α1c1
+λ ⃗ v1 + α2c2
+λ ⃗ v2 (A.2)
+19
+===== PAGE 20 =====
+By inserting⃗ wfrom Eq. A.2 into the definitions ofc1 andc 2, we get
+c1 =⟨⃗ u1, ⃗ w⟩=
+D
+⃗ u1, α1c1
+λ ⃗ v1 + α2c2
+λ ⃗ v2
+E
+= α1c1
+λ ⟨⃗ u1, ⃗ v1⟩+ α2c2
+λ ⟨⃗ u1, ⃗ v2⟩(A.3)
+c2 =⟨⃗ u2, ⃗ w⟩=
+D
+⃗ u2, α1c1
+λ ⃗ v1 + α2c2
+λ ⃗ v2
+E
+= α1c1
+λ ⟨⃗ u2, ⃗ v1⟩+ α2c2
+λ ⟨⃗ u2, ⃗ v2⟩(A.4)
+This can be expressed in a more condensed way as
+J
+c1
+c2
+
+=
+α1⟨⃗ u1, ⃗ v1⟩α 2⟨⃗ u1, ⃗ v2⟩
+α1⟨⃗ u2, ⃗ v1⟩α 2⟨⃗ u2, ⃗ v2⟩
+ c1
+c2
+
+=λ
+c1
+c2
+
+(A.5)
+which implies that the eigenvaluesλofMare the same as those from the matrixJ. The
+inner products appearing in the components ofJare:
+⟨⃗ u1, ⃗ v1⟩=
+κX
+j=1
+k1(j)·(k 1(j)−1)P(j) =⟨k 2
+1⟩ − ⟨k1⟩(A.6)
+⟨⃗ u1, ⃗ v2⟩=
+κX
+j=1
+(k1(j)−1)k 2(j)P(j) = (⟨k 1⟩ −1)⟨k2⟩(A.7)
+In analogous way,⟨⃗ u2, ⃗ v1⟩= (⟨k 2⟩ −1)⟨k1⟩and⟨⃗ u2, ⃗ v2⟩=⟨k 2
+2⟩ − ⟨k2⟩. Finally, recalling
+thatα i = βi
+γ⟨ki⟩, the resulting matrix is
+J=
+ β1
+γ
+⟨k2
+1⟩−⟨k1⟩
+⟨k1⟩
+β2
+γ (⟨k1⟩ −1)
+β1
+γ (⟨k2⟩ −1) β2
+γ
+⟨k2
+2⟩−⟨k2⟩
+⟨k2⟩
+!
+(A.8)
+References
+[1] W. O. Kermack, A. G. McKendrick, A Contribution to the Mathematical Theory of
+Epidemics, Proc. R. Soc. A 115 (1927) 700.doi:10.1098/rspa.1927.0118.
+[2] J. D. Murray (Ed.), Mathematical Biology, Vol. 17, Springer New York, New York, NY,
+2002.doi:10.1007/b98868.
+[3] R. M. May, A. L. Lloyd, Infection dynamics on scale-free networks, Phys. Rev. E 64
+(2001) 66112.doi:10.1103/PhysRevE.64.066112.
+[4] R. M. May, S. Gupta, A. R. McLean, Infectious disease dynamics: what characterizes a
+successful invader?, Philosophical Transactions of the Royal Society of London. Series
+B: Biological Sciences 356 (1410) (2001) 901–910.doi:10.1098/rstb.2001.0866.
+20
+===== PAGE 21 =====
+[5] P. van den Driessche, J. Watmough, Reproduction numbers and sub-threshold endemic
+equilibria for compartmental models of disease transmission, Mathematical Biosciences
+180 (1-2) (2002) 29–48.doi:10.1016/S0025-5564(02)00108-6.
+[6] R. Pastor-Satorras, C. Castellano, P. Van Mieghem, A. Vespignani, Epidemic pro-
+cesses in complex networks, Rev. Mod. Phys. 87 (3) (2015) 925–979.doi:10.1103/
+RevModPhys.87.925.
+[7] M. N. Kuperman, Invited review: Epidemics on social networks, Papers in Physics 5
+(2013) 050003.doi:10.4279/pip.050003.
+[8] M. J. Keeling, K. T. Eames, Networks and epidemic models, Journal of The Royal
+Society Interface 2 (4) (2005) 295–307.doi:10.1098/rsif.2005.0051.
+[9] M. Kuperman, G. Abramson, Small World Effect in an Epidemiological Model, Physical
+Review Letters 86 (2001) 2909–2912.doi:10.1103/PhysRevLett.86.2909.
+[10] D. Zanette, S. Risau, Infection Spreading in a Population with Evolving Contacts,
+Journal of Biological Physics 34 (2008) 135–148.doi:10.1007/s10867-008-9060-9.
+[11] D.H.Zanette, M.Kuperman, Effectsofimmunizationinsmall-worldepidemics, Physica
+A: Statistical Mechanics and its Applications 309 (3) (2002) 445–452.
+[12] A. Karaivanov, A social network model of COVID-19, PLOS ONE 15 (2020) 1–33.
+doi:10.1371/journal.pone.0240878.
+[13] F. A. Salem, U. F. Moreno, A Multi-Agent-Based Simulation Model for the Spread-
+ing of Diseases Through Social Interactions During Pandemics, Journal of Con-
+trol, Automation and Electrical Systems 33 (4) (2022) 1161–1176.doi:10.1007/
+s40313-022-00920-3.
+[14] H. E. Benítez, F. E. Cornes, C. O. Dorso, G.A. Frank, Disease Spreading through
+Complex Small World Networks, European Society of Medicine (2024).doi:10.18103/
+mra.v12i9.5706.
+[15] Y. Moreno, R. Pastor-Satorras, A. Vespignani, Epidemic outbreaks in complex hetero-
+geneous networks, The European Physical Journal B - Condensed Matter and Complex
+Systems (2002).doi:10.1140/epjb/e20020122.
+[16] M. Barthélemy, A. Barrat, R. Pastor-Satorras, A. Vespignani, Dynamical patterns of
+epidemic outbreaks in complex heterogeneous networks, Journal of Theoretical Biology
+235 (2) (2005) 275–288.doi:10.1016/j.jtbi.2005.01.011.
+[17] R. Pastor-Satorras, A. Vespignani, Immunization of complex networks, Phys. Rev. E
+65 (3) (2002) 36104.
+21
+===== PAGE 22 =====
+[18] M. Barthélemy, A. Barrat, R. Pastor-Satorras, A. Vespignani, Velocity and Hierarchical
+Spread of Epidemic Outbreaks in Scale-Free Networks, Phys. Rev. Lett. 92, 178701
+(2004).doi:10.1103/PhysRevLett.92.178701.
+[19] E. Rozan, S. Bouzat, M. Kuperman, Testing lockdown measures in epidemic outbreaks
+through mean-field models considering the social structure, Physica A: Statistical Me-
+chanics and its Applications 632 (2023) 129330.doi:10.1016/j.physa.2023.129330.
+[20] N. N. Chung, L. Y. Chew, Modelling Singapore COVID-19 pandemic with a SEIR
+multiplex network model, Scientific Reports 11 (1) (2021) 10122.doi:10.1038/
+s41598-021-89515-7.
+[21] Q.-H. Liu, M. Ajelli, A. Aleta, S. Merler, Y. Moreno, A. Vespignani, Measurability
+of the epidemic reproduction number in data-driven contact networks, Proceedings of
+the National Academy of Sciences 115 (50) (2018) 12680–12685.doi:10.1073/pnas.
+1811115115.
+[22] C. Buono, L. G. Alvarez-Zuzek, P. A. Macri, L. A. Braunstein, Epidemics in Par-
+tially Overlapped Multiplex Networks, PLoS ONE 9 (3) (2014) e92200.doi:10.1371/
+journal.pone.0092200.
+[23] F. Brauer, P. van den Driessche, J. Wu (Eds.), Mathematical Epidemiology,
+Vol. 1945, Springer Berlin Heidelberg, Berlin, Heidelberg, 2008.doi:10.1007/
+978-3-540-78911-6.
+[24] P. Erdős, A. Rényi, On random graphs.I., Publicationes Mathematicae Debrecen (1959)
+290–297doi:10.5486/PMD.1959.6.3-4.12.
+[25] D. J. Watts, S. H. Strogatz, Collective dynamics of ‘small-world’ networks, Nature
+393 (6684) (1998) 440–442.doi:10.1038/30918.
+[26] C. Gábor, N. Tamás, The igraph software package for complex network research, Inter-
+Journal Complex Systems (2006) 1695doi:10.5281/zenodo.3630268.
+[27] J. P. Aparicio, M. Pascual, Building epidemiological models from R0 : an implicit
+treatment of transmission in networks, Proceedings of the Royal Society B: Biological
+Sciences 274 (1609) (2007) 505–512.doi:10.1098/rspb.2006.0057.
+22

@@ -1,0 +1,800 @@
+
+===== PAGE 1 =====
+arXiv:1104.2364v1  [physics.soc-ph]  13 Apr 2011
+Epidemic spreading with immunization rate on complex netwo rks
+Shinji Tanimoto
+(tanimoto@cc.u-kochi.ac.jp)
+Department of Mathematics, University of Kochi, Kochi 780-8515 , Japan.
+Abstract
+We investigate the spread of diseases, computer viruses or i nformation on complex networks and also
+immunization strategies to prevent or control the spread. W hen an entire population cannot be immunized
+and the eﬀect of immunization is not perfect, we need the targ eted immunization with immunization rate.
+Under such a circumstance we calculate epidemic thresholds for the SIR and SIS epidemic models. It is shown
+that, in scale-free networks, the targeted immunization is eﬀective only if the immunization rate is equal to
+one. We analyze here epidemic spreading on directed complex networks, but similar results are also valid for
+undirected ones.
+1. Introduction
+The spread of diseases, computer viruses or infor-
+mation in complex networks such as social networks,
+the WWW and Internet has attracted researchers’ at-
+tention in various ﬁelds. We refer to [2, 3, 8] and ref-
+erences therein for abundant examples of complex net-
+works. Also preventing the spread has extensively been
+investigated. A typical method to prevent or control
+an epidemic spread is immunization such as vaccination
+[5]. Generally, it is diﬃcult or impossible to perfectly
+immunize an entire population, so the object or target
+of immunization must be prescribed. However in turn,
+all of target individuals may not be immunized due to,
+for example, lack of plenty of time and resources, other-
+wise because some are overlooked. We describe this sit-
+uation as ”imperfect immunization to targeted nodes”.
+Nodes are sometimes called vertices or individuals. In
+another aspect, vaccination or a treatment cannot pro-
+vide suﬃcient immunity upon target nodes, which we
+call ”insuﬃcient immunity”. Therefore, we have to in-
+troduce a parameter α (0 ≤ α ≤ 1) called immunization
+rate for such both cases. As in [12] we assume that α
+is a constant throughout.
+In [10] some immunization schemes are evaluated in
+the SIS model on undirected networks and [4] also of-
+fers other schemes for immunization, and [12] provides
+targeted immunization strategies in the SIR model. All
+those studies are devoted to undirected. In undirected
+networks links (or edges) do not have directions or they
+are bidirectional by nature.
+However, one can ﬁnd many directed complex net-
+works [2, 3, 8] in nature, society, and artiﬁcial struc-
+tures; food webs, phone-call networks, the WWW, etc.
+The indegree of a node is the number of incoming links
+into the node and the outdegree is that of outgoing
+links emanating from it. If the indegree and outdegree
+distributions of a directed network follow power laws:
+P (k) ∝ k−γ and Q(ℓ) ∝ ℓ−γ′
+for indegrees k and outdegrees ℓ, and if the exponents
+satisfy 2 < γ, γ ′ ≤ 3, then the network is called scale-
+free. Undirected networks make no distinction between
+both degree distributions.
+The direction plays an important role in the study
+of epidemic spreading on a directed network. Diseases,
+computer viruses or information are transmitted to
+other nodes (or vertices) through outgoing links and
+a node is infected by incoming links. We derive the
+critical infection rate or the threshold, above which a
+disease spreads in the networks and below which it dies
+out.
+First we prescribe a target set of immunization in
+terms of indegrees and outdegrees on directed networks.
+We derive the thresholds for the SIR and SIS epidemic
+dynamics involving the target set and an immunization
+rate α. Actually they turn out the same for both. In
+the SIR model, the averaged fraction of nodes that are
+ever infected until the disease dies out is also given.
+Finally, based on thresholds, we will discuss whether
+immunization strategies are eﬀective or not in scale-
+free networks. In particular, all targeted immunization
+schemes are shown to be eﬀective only if α = 1, which
+was assumed in [10] from the beginning.
+Since undirected networks are simpler than directed
+ones, we immediately see that similar results hold on
+undirected networks by the arguments presented here,
+and they are also partially found in [4] for the SIS
+model and in [12] for the SIR model.
+2. Models of immunization in complex
+networks
+In this section we introduce preliminary deﬁnitions
+and model epidemic spreading with immunization rate.
+Our model is based on [11], where epidemic spread-
+ing with no immunization is discussed on directed net-
+works. First we treat the SIR model and later proceed
+to the SIS model which is regarded as a special case of
+the SIR model.
+In the SIR model, nodes of the network are di-
+vided into the following three groups regarding infec-
+1
+===== PAGE 2 =====
+tion states ([5], [7, Chap. 10]): Susceptible (S), Infected
+(I) and Removed (R). In order to deal with immuniza-
+tion such as vaccination, we add one more state: Im-
+munized. Outgoing links emanating from immunized
+nodes are harmless.
+Hereafter we will denote a susceptible node by an
+S-node etc., for short. An S-node becomes infected at
+a rate of λ (0 ≤ λ ≤ 1). The parameter λ is the infec-
+tion rate, for which we will derive the critical value for
+an outbreak of a disease, a computer virus, etc. The
+disease can be passed from I-nodes to S-nodes follow-
+ing only the direction of directed links. R-nodes have
+either recovered from the disease or died and so they
+cannot pass the disease to others. An I-node becomes
+an R-node at a rate δ (0 ≤ δ ≤ 1) and, without loss of
+generality, we will set δ = 1.
+Let p(k, ℓ) be the joint probability distribution of
+nodes with indegree k and outdegree ℓ, and let us de-
+note the marginal distributions by
+P (k) =
+∑
+ℓ
+p(k, ℓ), Q (ℓ) =
+∑
+k
+p(k, ℓ)
+and the averages by
+⟨k⟩ =
+∑
+k,ℓ
+kp(k, ℓ) =
+∑
+k
+kP (k),
+⟨ℓ⟩ =
+∑
+k,ℓ
+ℓp(k, ℓ) =
+∑
+ℓ
+ℓQ(ℓ),
+⟨kℓ⟩ =
+∑
+k,ℓ
+kℓp(k, ℓ).
+We denote by T the object or target set for immu-
+nization that is characterized in terms of indegrees and
+outdegrees, ¯T being the complement of T that is not
+an object of immunization. The notation ( k, ℓ) ∈ T
+means that the population of all nodes with indegree k
+and outdegree ℓ is an object of immunization. In case
+of T = {(k, ℓ)|k > K }, for example, the population of
+all nodes with indegrees exceeding a number K is col-
+lectively an object of immunization. The summation
+restricted to all ( k, ℓ) in T will be denoted by ∑
+T , and
+similarly for ¯T by ∑
+¯T . Furthermore, the average of the
+product kℓ over T is denoted by ⟨kℓ⟩T :
+⟨kℓ⟩T =
+∑
+(k,ℓ)∈T
+kℓp(k, ℓ) =
+∑
+T
+kℓp(k, ℓ).
+In this paper we assume that the immunization rate
+α (0 ≤ α ≤ 1) is a constant as in [12], although it can
+be dependent on k and ℓ as well. In the following two
+models A and B, remark that α has diﬀerent mean-
+ings, althought the same notation is used. Within the
+population of all nodes with indegree k and outdegree
+ℓ, variables Sk,ℓ(t), ρk,ℓ(t), Rk,ℓ(t) indicate the densities
+of S-, I-, R-nodes at time t, respectively. Naturally,
+by setting k = ℓ, the same arguments are applied to
+undirected networks.
+A. Imperfect immunization to targeted nodes
+This is the case where all of target nodes in T cannot
+be immunized, because some are overlooked or hidden
+etc., and α is like the vaccine coverage within T .
+Since there are no rewiring of links and immunized
+nodes are no longer S-nodes, we have
+Sk,ℓ(t) + ρk,ℓ(t) + Rk,ℓ(t) =
+{
+1 − α, (k, ℓ) ∈ T,
+1, (k, ℓ) ∈ ¯T , (1)
+The condition α = 1 implies the perfect immunization
+for T , while α = 0 means no immunization, which co-
+incides with the simple SIR model [11].
+Following the dynamical mean-ﬁeld theory ([6, 9,
+10]), we see that the spreading process on a directed
+network can be described by the system of diﬀerential
+equations:
+dSk,ℓ
+dt = −λkSk,ℓ(t)θ(t), (2)
+dρk,ℓ
+dt = λkSk,ℓ(t)θ(t) − ρk,ℓ(t), (3)
+dRk,ℓ
+dt = ρk,ℓ(t). (4)
+The term λkSk,ℓ(t)θ(t) in (2) and (3) indicates the frac-
+tion of newly infected nodes through k incoming links,
+while θ(t) is the probability of contact with I-nodes
+from whose outgoing links the disease spreads. Hence
+θ(t) can be written in parts as
+θ(t) = 1
+∑
+k,ℓ
+ℓp(k, ℓ)
+( ∑
+T
+ℓp(k, ℓ)ρk,ℓ(t)
++
+∑
+¯T
+ℓp(k, ℓ)ρk,ℓ(t)
+)
+, (5)
+for the later use. Here the denominator is the average
+⟨ℓ⟩ and each directed link is counted twice as one out-
+degree of some node and as one indegree of another.
+Hence the average outdegree is equal to the average
+indegree: ⟨ℓ⟩ = ⟨k⟩. From (1) the initial conditions
+imposed upon Sk,ℓ are
+Sk,ℓ(0) =
+{ 1 − α, (k, ℓ) ∈ T,
+1, (k, ℓ) ∈ ¯T . (6)
+The initial values of other variables are assumed to be
+zero or nearly zero.
+B. Insuﬃcient immunity
+This model is applied to the case, for example,
+where vaccination or a treatment cannot provide suf-
+ﬁcient immunity upon the target nodes in T , so the
+rate α (0 ≤ α ≤ 1) represents the immunity eﬀect. The
+higher it is, the less infected S-nodes in T become. The
+2
+===== PAGE 3 =====
+diﬀerential equations are divided into two parts. First,
+for ( k, ℓ) ∈ T , it follows that
+dSk,ℓ
+dt = −λk(1 − α)Sk,ℓ(t)θ(t), (7)
+dρk,ℓ
+dt = λk(1 − α)Sk,ℓ(t)θ(t) − ρk,ℓ(t), (8)
+dRk,ℓ
+dt = ρk,ℓ(t). (9)
+Secondly, for (k, ℓ) ∈ ¯T , Eqs. (2)–(4) remain valid. The
+probability θ is the same as (5) and the initial condition
+imposed upon Sk,ℓ is
+Sk,ℓ(0) = 1
+for all k and ℓ. The initial values of other variables are
+zero or nearly zero.
+The next section analyzes models A and B in di-
+rected complex networks with target set T and with
+immunization rate α. In Section 4 the corresponding
+SIS models are considered. Actually all thresholds turn
+out the same. It is easy to see that the following argu-
+ments can be applied to models A and B considered in
+undirected complex networks.
+3. Epidemic spreading in the SIR model
+A. Imperfect immunization to targeted nodes
+To begin with we solve Eq. (2) under the initial
+conditions (6):
+Sk,ℓ(t) =
+{
+(1 − α)e−λkφ(t) for ( k, ℓ) ∈ T,
+e−λkφ(t) for ( k, ℓ) ∈ ¯T , (10)
+where
+φ(t) =
+∫ t
+0
+θ(t′)dt′.
+By (4), (5) and Rk,ℓ(0) = 0 for all k and ℓ, φ(t) has an
+expression:
+φ(t) = 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)
+∫ t
+0
+ρk,ℓ(t′)dt′
++
+∑
+¯T
+ℓp(k, ℓ)
+∫ t
+0
+ρk,ℓ(t′)dt′}
+(11)
+= 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)Rk,ℓ(t)
++
+∑
+¯T
+ℓp(k, ℓ)Rk,ℓ(t)
+}
+.
+To derive the diﬀerential equation for φ(t), we use (1),
+(10) and (11). Then it follows that
+dφ(t)
+dt = 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)ρk,ℓ(t) +
+∑
+¯T
+ℓp(k, ℓ)ρk,ℓ(t)
+}
+= 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)
+(
+1 − α − Rk,ℓ(t) − Sk,ℓ(t)
+)
++
+∑
+¯T
+ℓp(k, ℓ)
+(
+1 − Rk,ℓ(t) − Sk,ℓ(t)
+)}
+= 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)
+(
+1 − α − Sk,ℓ(t)
+)
++
+∑
+¯T
+ℓp(k, ℓ)
+(
+1 − Sk,ℓ(t)
+)}
+− φ(t) (12)
+= 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)
+(
+1 − α − (1 − α)e−λkφ(t))
++
+∑
+¯T
+ℓp(k, ℓ)
+(
+1 − e−λkφ(t))}
+− φ(t)
+= 1
+⟨ℓ⟩
+{
+(1 − α)
+∑
+T
+ℓp(k, ℓ)
+(
+1 − e−λkφ(t))
++
+∑
+¯T
+ℓp(k, ℓ)
+(
+1 − e−λkφ(t))}
+− φ(t).
+We are concerned with a steady state of the epi-
+demic spreading, for which one has a limit
+Φ = lim
+t→∞
+φ(t),
+together with the condition
+lim
+t→∞
+dφ(t)
+dt = 0.
+Substituting these two into Eq. (12), we get the equa-
+tion for Φ as follows:
+Φ = 1
+⟨ℓ⟩
+{
+(1 − α)
+∑
+T
+ℓp(k, ℓ)(1 − e−λkΦ )
++
+∑
+¯T
+ℓp(k, ℓ)(1 − e−λkΦ )
+}
+. (13)
+An epidemic outbreak implies that this equation has
+a solution Φ > 0 other than Φ = 0. Since the right hand
+side of (13) is a monotone increasing and concave func-
+tion of Φ and its value at Φ = 1 is less than 1, the
+condition for it is
+d
+dΦ
+1
+⟨ℓ⟩
+{
+(1 − α)
+∑
+T
+ℓp(k, ℓ)(1 − e−λkΦ )
++
+∑
+¯T
+ℓp(k, ℓ)(1 − e−λkΦ )
+}⏐
+⏐
+Φ=0 ≥ 1.
+Thus the critical threshold λc is expressed as
+λc = ⟨ℓ⟩
+(1 − α) ∑
+T kℓp(k, ℓ) + ∑
+¯T kℓp(k, ℓ) . (14)
+Alternatively, using the identity
+∑
+¯T
+kℓp(k, ℓ) = ⟨kℓ⟩ −
+∑
+T
+kℓp(k, ℓ),
+3
+===== PAGE 4 =====
+(14) is equal to
+λc = ⟨ℓ⟩
+⟨kℓ⟩ − α⟨kℓ⟩T
+. (15)
+In [7, Chap.10] the total number of infected indi-
+viduals is discussed for the classical SIR model, which
+represents the ﬁnal outbreak size O. In our setting it
+is the averaged fraction of nodes ever infected until the
+disease dies out. Using the solutions (10), this is writ-
+ten as
+O =
+∑
+k,ℓ
+p(k, ℓ)(1 − Sk,ℓ(∞))
+= 1 −
+∑
+T
+p(k, ℓ)Sk,ℓ(∞) −
+∑
+¯T
+p(k, ℓ)Sk,ℓ(∞)
+= 1 − (1 − α)
+∑
+T
+p(k, ℓ)e−λkΦ −
+∑
+¯T
+p(k, ℓ)e−λkΦ
+= 1 −
+∑
+k,ℓ
+p(k, ℓ)e−λkΦ + α
+∑
+T
+p(k, ℓ)e−λkΦ
+= 1 −
+∑
+k
+P (k)e−λkΦ + α
+∑
+T
+p(k, ℓ)e−λkΦ . (16)
+The last term of the right hand side provides the eﬀect
+of an immunization.
+As an illustrative example let us consider an im-
+munization of nodes with large indegrees. This means
+T = {(k, ℓ)|k > K } or
+Sk,ℓ(t) + ρk,ℓ(t) + Rk,ℓ(t) =
+{ 1 − α, k > K,
+1, k ≤ K,
+where K is a certain large value of the indegree. The
+corresponding initial conditions imposed upon Sk,ℓ are
+Sk,ℓ(0) =
+{
+1 − α, k > K,
+1, k ≤ K.
+The initial values of other variables are zero or nealy
+zero.
+Using the solution Φ of Eq. (13) for this case, we
+obtain the fraction (16) of the outbreak size:
+O = 1 −
+∑
+k
+P (k)e−λkΦ + α
+∑
+k>K
+P (k)e−λkΦ ,
+by means of the indegree distribution P (k). If the in-
+degree distribution follows a power law
+P (k) ∝ k−γ, k ≥ m
+with γ > 1, then P (k) = ( γ − 1)mγ−1k−γ (k ≥ m),
+where m is the minimum indegree. Deﬁning the incom-
+plete gamma function [1, p.260] by
+Γ( a, x) =
+∫ ∞
+x
+ta−1e−tdt,
+we can write the fraction (16) of the outbreak size as
+O = 1 −
+∫ ∞
+m
+P (k)e−λkΦ dk + α
+∫ ∞
+K
+P (k)e−λkΦ dk
+= 1 − (γ − 1)(λmΦ) γ−1Γ(1 − γ, λmΦ)
++ α(γ − 1)(λKΦ) γ−1Γ(1 − γ, λK Φ) ,
+by the continuous approximation.
+B. Insuﬃcient immunity
+Since similar arguments used in A are also applied
+to this model, we only give an outline of the analysis.
+Solving (7)–(9) under the initial condition Sk,ℓ(0) = 1
+for all ( k, ℓ), we have, in place of (10) and (13),
+Sk,ℓ(t) =
+{
+e−λ(1−α)kφ(t) for ( k, ℓ) ∈ T,
+e−λkφ(t) for ( k, ℓ) ∈ ¯T ,
+and
+Φ = 1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)(1 − e−λ(1−α)kΦ )
++
+∑
+¯T
+ℓp(k, ℓ)(1 − e−λkΦ )
+}
+,
+respectively. Solving the following equation for λ,
+d
+dΦ
+1
+⟨ℓ⟩
+{ ∑
+T
+ℓp(k, ℓ)(1 − e−λ(1−α)kΦ )
++
+∑
+¯T
+ℓp(k, ℓ)(1 − e−λkΦ )
+}⏐
+⏐
+Φ=0 = 1,
+we again obtain (14) and (15). When T = {(k, ℓ)|k >
+K} as above, the averaged fraction of nodes ever in-
+fected until the disease dies out becomes
+O = 1 −
+∑
+k>K
+P (k)e−λ(1−α)kΦ −
+∑
+k≤K
+P (k)e−λkΦ ,
+by an application of (16).
+4. Epidemic spreading in the SIS model
+In the SIS model, R-nodes are absent and nodes
+that recovered from the disease cannot acquire eternal
+immunity and may be infected again and again. Let T
+and α (0 ≤ α ≤ 1) be the same as before in the mod-
+els A and B. The diﬀerential equations for the densities
+Sk,ℓ(t), ρk,ℓ(t) of S-, I-nodes at time t are easily derived
+from those for the SIR models in Section 2.
+A. Imperfect immunization to targeted nodes
+In this case, remarking (1), we have
+Sk,ℓ(t) =
+{ 1 − α − ρk,ℓ(t), for ( k, ℓ) ∈ T,
+1 − ρk,ℓ(t), for ( k, ℓ) ∈ ¯T .
+4
+===== PAGE 5 =====
+Therefore, Eqs. (2)–(4) in Section 2 are replaced by the
+diﬀerential equations
+dρk,ℓ(t)
+dt =
+
+
+
+
+
+
+
+
+
+
+
+λk(1 − α − ρk,ℓ(t))θ(t) − ρk,ℓ(t),
+if ( k, ℓ) ∈ T,
+λk(1 − ρk,ℓ(t))θ(t) − ρk,ℓ(t),
+if ( k, ℓ) ∈ ¯T ,
+(17)
+where θ(t) is the same probability as (5).
+At the steady state, as in Section 3, we will have
+the condition
+lim
+t→∞
+dρk,ℓ
+dt = 0
+for all k and ℓ, and a limit
+Θ = lim
+t→∞
+θ(t).
+So we get from (17),
+lim
+t→∞
+ρk,ℓ(t) =
+{ (1 − α)λkΘ /(1 + λkΘ) , if ( k, ℓ) ∈ T,
+λkΘ /(1 + λkΘ) , if ( k, ℓ) ∈ ¯T .
+Substituting these into (5) and letting t → ∞ , we
+have the equation for Θ as follows:
+Θ = 1
+⟨ℓ⟩(1 + λkΘ)
+( ∑
+T
+(1 − α)λkℓp(k, ℓ)Θ
++
+∑
+¯T
+λkℓp(k, ℓ)Θ
+)
+.
+If this has a solution Θ > 0 other than Θ = 0, then it
+corresponds to an endemic state. Since the right hand
+side of the equation is a monotone increasing and con-
+cave function of Θ and its value at Θ = 1 is less than
+1, the condition for an endemic outbreak is
+d
+dΘ
+1
+⟨ℓ⟩
+( ∑
+T
+(1 − α)λkℓp(k, ℓ)Θ
+1 + λkΘ
++
+∑
+¯T
+λkℓp(k, ℓ)Θ
+1 + λkΘ
+) ⏐
+⏐
+⏐
+Θ=0
+≥ 1.
+Again, this yields the same threshold (14) or (15) as
+the model A for the SIR model:
+λc = ⟨ℓ⟩
+⟨kℓ⟩ − α ∑
+T kℓp(k, ℓ) = ⟨ℓ⟩
+⟨kℓ⟩ − α⟨kℓ⟩T
+.
+B. Insuﬃcient immunity
+This model just coincides with Eq. (10) of [4] for
+the SIS model on undirected networks. Taking Eq. (3)
+for ¯T and Eq. (8) for T , we get
+dρk,ℓ(t)
+dt =
+
+
+
+
+
+
+
+
+
+
+
+λk(1 − α)(1 − ρk,ℓ(t))θ(t) − ρk,ℓ(t),
+if ( k, ℓ) ∈ T,
+λk(1 − ρk,ℓ(t))θ(t) − ρk,ℓ(t),
+if ( k, ℓ) ∈ ¯T .
+Using this equation for (17) and repeating the above
+calculations, we obtain again the same threshold (14)
+or (15) as in A.
+5. Immunization strategies
+We have seen that the thresholds are all the same
+in four cases. So in any one of them we can evaluate
+immunization strategies based on the thresholds. In
+view of (14) or (15), to control epidemic outbreaks, it
+is desirable to choose the set T so that ⟨kℓ⟩T becomes
+as large as possible, and T should be a considerably
+small region compared to the entire population from a
+practical point of view.
+First remark that in case of no immunization ( α =
+0) the epidemic threshold is equal to
+λ◦
+c = ⟨ℓ⟩
+⟨kℓ⟩,
+by (14) or (15).
+If the entire population is an object for immu-
+nization, that is, ¯T is empty, then from the identity
+⟨kℓ⟩T = ⟨kℓ⟩ the threshold due to this global immu-
+nization is
+ˆλc = ⟨ℓ⟩
+⟨kℓ⟩ − α⟨kℓ⟩T
+= 1
+1 − α
+⟨ℓ⟩
+⟨kℓ⟩.
+Suppose α < 1. Then the threshold for any targeted
+immunization satisﬁes
+λc = ⟨ℓ⟩
+⟨kℓ⟩ − α⟨kℓ⟩T
+≤ ˆλc = 1
+1 − α λ◦
+c , (18)
+since ⟨kℓ⟩T ≤ ⟨kℓ⟩ always holds. Therefore, in case of
+α < 1, certainly any targeted immunization is not more
+than the global immunization.
+Suppose that in addition to α < 1 considered net-
+works are scale-free as presented in Section 1. Scale-
+free networks are prone to have very large ⟨kℓ⟩; λ◦
+c ≈ 0,
+under a high correlation between nodal indegrees and
+outdegrees [11]. In such a case inequality (18) tells us
+that any targeted immunization is not eﬀective: λc ≈ 0.
+Next supposing α = 1, let us consider a simple tar-
+get set T by deﬁning ¯T = {(k, ℓ)|k, ℓ ≤ M } for some
+positive M . This yields
+⟨kℓ⟩¯T =
+∑
+k,ℓ≤M
+kℓp(k, ℓ) < M 2,
+and hence, even in scale-free networks, we are able to
+conclude
+λc = ⟨ℓ⟩
+⟨kℓ⟩ − ⟨kℓ⟩T
+= ⟨ℓ⟩
+⟨kℓ⟩¯T
+> ⟨ℓ⟩
+M 2 > λ◦
+c ≈ 0,
+which implies the eﬀectiveness of the targeted immu-
+nization only under the condition α = 1. The choice
+of a desirable target set T depends on the probability
+distribution p(k, ℓ), so this estimate may be improved
+5
+===== PAGE 6 =====
+further.
+Finally, as for undirected networks, there is no dis-
+tinction between indegrees and outdegrees. So, setting
+k = ℓ in (15), the threshold of an epidemic outbreak
+can be written in our notation as
+λc = ⟨k⟩
+⟨k2⟩ − α⟨k2⟩T
+,
+for an immunization rate α and a target set T that is
+characterized by the degree k. Using this, we see that
+similar results of this section hold for undirected net-
+works. Note that in [12] the target set was assumed to
+be T = {k|k > K } for a large number K, namely a set
+of hub nodes. In this case the targeted immunization
+is not eﬀective unless it confers 100 percent immunity
+on all hub nodes in T .
+References
+[1] M. Abramowitz and I. A. Stegun (Eds.), Hand-
+book of Mathematical Functions, Dover Pub., New
+York, 1972.
+[2] S. Boccaletti, V. Latora, Y. Moreno, M. Chavez
+and D.-U. Hwang, Complex networks: Structure
+and dynamics, Physics Reports 424, 175–308,
+2006.
+[3] S. N. Dorogovtsev and J. F. F. Mendes, Evolution
+of Networks: From Biological Nets to the Internet
+and WWW , Oxford Univ. Press, Oxford, 2003.
+[4] X. Fu, M. Small, D. Walker and H. Zhang, Epi-
+demic dynamics on scale-free networks with piece-
+wise linear infectivity and immunization, Physical
+Review E 77, 036113, 2008.
+[5] J. Giesecke, Modern Infectious Disease Epidemi-
+olgy, E. Arnold Pub., London, 2002.
+[6] Y. Moreno, R. Pastor-Satorras and A. Vespig-
+nani, Epidemic outbreaks in complex heteroge-
+neous networks, European Physical Journal B 26,
+521-529, 2002.
+[7] J. D. Murray, Mathematical Biology , Springer
+Verlag, New York, 2002.
+[8] M. E. J. Newman, The structure and function
+of complex networks, SIAM Review 45 167–256,
+2003.
+[9] R. Pastor-Satorras and A. Vespignani, Epidemic
+spreading in scale-free networks, Physical Review
+Letters 86, 3200–3203, 2001.
+[10] R. Pastor-Satorras and A. Vespignani, Immuniza-
+tion of complex networks, Phyical Review E 65,
+036104, 2002.
+[11] S. Tanimoto, Epidemic thresholds in directed
+complex networks, arXiv:1103.1680, 2011.
+[12] Y. B. Wang, G. X. Xiao, J. Hua, T. H. Cheng and
+L. S. Wang, Imperfect targeted immunization in
+scale-free networks, Physica A 388, 2535–2546,
+2009.
+6

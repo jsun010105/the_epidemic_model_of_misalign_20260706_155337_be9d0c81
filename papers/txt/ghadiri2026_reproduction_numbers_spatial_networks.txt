@@ -1,0 +1,1283 @@
+
+===== PAGE 1 =====
+Epidemic reproduction numbers in spatial networks
+Zahra Ghadiri, Jari Saram¨ aki, and Takayuki Hiraoka
+Department of Computer Science, Aalto University, 00076 Espoo, Finland
+The basic and effective reproduction numbers are widely used metrics for characterizing the
+dynamics of infectious disease epidemics. However, the interpretation of these numbers is based
+on the assumption of homogeneous mixing and may not hold in real-world populations where the
+contact patterns deviate from that assumption. In this paper, we present a network-based framework
+to compare reproduction numbers in populations with and without spatial structure, while other
+parameters of the disease remain fixed. Using this framework, we show that in homogeneously mixed
+populations, in the absence of external interventions, the effective reproduction number decreases
+exponentially as the susceptible population declines. In contrast, in spatially structured populations,
+the basic reproduction number is smaller, and the effective reproduction number initially decreases
+faster but eventually converges to unity. We show that the reproduction number is determined by
+the level of competition between infectious nodes, which is governed by the network structure. Our
+results suggest that without knowledge of the network structure, reproduction numbers may not
+be informative for parameterizing the contagiousness of the disease or predicting the behavior of
+epidemic spreading.
+I. INTRODUCTION
+The transmission of infectious diseases involves an in-
+tricate interplay of biological, social, and environmen-
+tal factors, rendering epidemic dynamics inherently com-
+plex. This complexity poses challenges in understand-
+ing how outbreaks unfold, predicting their future course,
+and designing effective interventions. A widely adopted
+approach to address these challenges is to reduce epi-
+demic behavior to a single representative quantity. To
+characterize the epidemic dynamics at its initial stages,
+the basic reproduction numberR 0 is commonly used [1].
+This number represents the expected number of infec-
+tions caused by an initially infected individual in a fully
+susceptible population.
+Beyond usingR 0, monitoring real-time changes in
+disease transmission is crucial for assessing the effects
+of changes in contact patterns, intervention strategies,
+and the depletion of the susceptible pool. This can be
+achieved through the effective reproduction number, de-
+noted byR eff [2–4], which represents the expected num-
+ber of new infections caused by a single infected individ-
+ual under the present circumstances [5]. The effective
+reproduction number is particularly valuable when a siz-
+able fraction of the population has already been infected
+so that the assumptions behindR 0 no longer hold.
+These reproduction numbers are considered key vari-
+ables in infectious disease epidemiology because they are
+associated with the threshold behavior of epidemics. Us-
+ing branching process arguments, one can show that the
+disease invades a population and spreads widely when
+R0 >1, while it dies out rapidly otherwise. Similarly,
+an ongoing outbreak will continue to grow as long as
+Reff >1, whereas the incidence will decline ifR eff falls
+below one. Thus, reproduction numbers provide a con-
+cise metric that informs public health authorities about
+the risks associated with infectious diseases and the ef-
+fectiveness of control measures, such as vaccination [6]
+and non-pharmaceutical interventions [3, 7, 8].
+Despite their widespread acceptance as a fundamental
+concept, however, limitations of reproduction numbers
+have also been recognized. One limitation is that inter-
+pretations of reproduction numbers are deeply rooted in
+the assumption of a homogeneously mixed population, in
+which individuals interact randomly, and every infected
+individual has an equal chance of infecting every other.
+In reality, however, this assumption does not hold: in-
+dividuals typically have contact with a small subset of
+all others in the population. A primary factor that de-
+termines this subset is spatial constraints, as proximity
+is required for disease transmission. These spatial con-
+straints translate into a contact structure abundant in
+triangles, in which contact ofiwithjandkimplies con-
+tact betweenjandk.
+This discrepancy in assumptions about the contact
+structure makes the interpretation of the reproduction
+numbers less straightforward than what the traditional
+approach offers [9]. In the traditional approach, per-
+contact disease transmissibility andR 0 are directly pro-
+portional to one another. However, with a more elabo-
+rate contact structure, this may not be the case. Fur-
+thermore, mean-field models based on the homogeneous
+mixing assumption suggest that epidemics initially grow
+exponentially at a rate dictated byR 0, and subse-
+quentlyR eff exponentially decays to zero. Yet, in out-
+breaks of HIV/AIDS [10, 11], Ebola [12], and COVID-
+19 [13], a polynomial spread has been observed. Under
+such a subexponential growth, the estimated effective
+reproduction number gradually approaches unity over
+time [14, 15]. However, these previous studies remain
+largely phenomenological and do not provide an explana-
+tion of the microscopic mechanisms behind this behavior
+of the reproduction number.
+In this paper, we focus on how the spatial constraints
+of the contact structure in the population affect the re-
+production numbers while keeping per-contact transmis-
+sibility fixed. The spatial constraints can be incorporated
+by modelling the contact patterns as a network through
+arXiv:2603.22150v1  [q-bio.PE]  23 Mar 2026
+===== PAGE 2 =====
+2
+which infection spreads [16–18]. We use analytical cal-
+culations and simulations to systematically compare re-
+production numbers between stylized models of random
+and spatial networks. We demonstrate that the loopy
+contact structures induced by spatial constraints create
+competition between infectious individuals, reducing the
+basic reproduction number and driving the effective re-
+production number towards unity.
+This paper is organized as follows. In Section II, we
+introduce the models for epidemic dynamics and contact
+networks, and define the reproduction number per gener-
+ationR g. In Section III, we present our main results. We
+first derive the basic reproduction numberR 0 for random
+geometric graphs and compare it to the correspondingR0
+for Erd˝ os-R´ enyi graphs. We then analyze the behavior
+ofR g as a function ofgfor the two network models. Fi-
+nally, we derive the reproduction number as a function of
+the force of infection for all networks interpolating across
+the spectrum of spatiality and degree heterogeneity. We
+discuss the implications of our findings and conclude in
+Section IV.
+II. MODELS
+A. Epidemic dynamics
+In this work, we model a population as an undi-
+rected contact network where the nodes represent in-
+dividuals and the edges represent interactions between
+them through which the disease can be transmitted. We
+assume the contact network remains static throughout
+the epidemic. We focus on two categories of canoni-
+cal compartmental epidemic models on contact networks:
+The susceptible-infectious-recovered (SIR) model and the
+susceptible-infectious (SI) model. In both models, the
+population is initially fully susceptible except for a ran-
+domly chosen infected node. Transmission occurs be-
+tween an infected node and a susceptible node connected
+to it independently at a certain rate. After transmission,
+the susceptible node becomes infected and can infect its
+susceptible neighbors. In the SI model, an infected node
+will remain permanently infected, while in the SIR model,
+an infected node eventually transitions to the recovered
+state. A recovered node will no longer become infected
+or transmit the disease to others. Here, we assume Pois-
+son processes with constant rates of infection and recov-
+ery [19, 20].
+We adopt the epidemic percolation network (EPN)
+framework to implement the SI/SIR epidemic [19]. An
+EPN is a directed network with edges denoting potential
+transmission from the tail node to the head node, pro-
+vided that the tail is infected and the head is susceptible.
+This framework offers a way to map a stochastic epidemic
+process onto a static percolation model, thereby making
+the dynamics tractable.
+More precisely, given an undirected contact network
+G= (V, E), we encode stochastic transmission by an
+EPN as follows: For each connected pair of nodes{i, j} ∈
+E, we construct two directed edgesi→jandj→i, with
+weights equal to the timeti→j it would take forito trans-
+mit the disease toj, and the timet j→i it would take forj
+to transmit the disease toi, respectively. Both times are
+drawn from an exponential distribution with rateβ, that
+is,p(t i→j) =βe −βti→j . We also draw a random timer i it
+takes for each nodei∈Vto recover from an exponential
+distribution with rateα, that is,p(r i) =αe −αri . Suppose
+nodeibecomes infected at timet i. In the SIR dynam-
+ics, the infection is transmitted from nodeito nodejat
+timet j =t i +t i→j ifiremains infected (i.e.,t i→j < ri)
+andjremains susceptible by then. Eventually,irecovers
+at timet i +r i. In the SI dynamics, an infectious node
+remains infected forever, that is,α→0. Thus, infec-
+tion is transmitted fromitojat timet j =t i +t i→j if
+jremains susceptible. Then, the epidemic percolation
+network (EPN) consists of only the directed edgesi→j
+that transmit the infection (i.e.,t i→j < ri) with trans-
+mission timet i→j. Under this model, the transmission
+probabilityT, the probability of transmission between
+two nodes, can be written as [21]
+T= β
+α+β ,(1)
+whereT= 1 represents the SI dynamics.
+B. Reproduction number per generation
+In a partially susceptible population, the state of the
+epidemic is typically represented by an effective repro-
+duction number. In this work, we quantify the effective
+reproduction number as a function of generation, denoted
+byR g. Consider that infection begins at nodeu 0, ran-
+domly chosen from the set of nodes in the EPN. A sus-
+ceptible nodeiin the EPN becomes infected through a
+pathγ, connectingu 0 toi. The transmission time of such
+a path in the EPN is the sum of the transmission times
+of its constituent edges, i.e.,
+X
+(i→j)∈γ
+ti→j,(2)
+wheret i→j denotes the transmission time of edgei→j.
+We define the generationg(i) of an infectious nodeias
+the number of edges of the path with the shortest trans-
+mission time fromu 0 toi. In this framework, the initially
+infected node belongs to generation zero,g(u 0) = 0, and
+each node in generationg+1 is infected by a node in gen-
+erationg. We define the reproduction number per gener-
+ation,R g, as the expected number of secondary infections
+caused by a node infected in generationg. Therefore, the
+reproduction number per generation is given by
+Rg = ng+1
+ng
+,(3)
+wheren g is the number of nodes in generationg. The
+value ofR g, as a function ofg, determines the depth of
+===== PAGE 3 =====
+3
+the spread of infection. A larger value ofg max = max{g|
+Rg >0}implies a deeper spread, meaning that on av-
+erage the outbreak reaches susceptible nodes through
+longer transmission paths.
+Forg= 0, the reproduction number per generation is
+equal to the basic reproduction numberR 0. The early
+phase of spread is commonly approximated by a branch-
+ing process with a reproductive rateR 0.
+C. Network structure
+A contact networkG= (V, E) provides a represen-
+tation of interactions as a set of edgesE, connecting a
+set of nodesV, representing individuals. When informa-
+tion about interactions between individuals is limited, a
+common assumption is that they interact randomly, po-
+tentially with different levels of activity. In this scenario,
+the contact network can be modelled using the configu-
+ration model, with its degree distribution reflecting the
+heterogeneity in contact numbers.
+However, real-world interactions are not necessarily
+random, but are often shaped by spatial and social con-
+straints. For example, frequent physical contact typically
+occurs between individuals who live together or near each
+other, such as family members or roommates, or between
+individuals who share jobs or hobbies, such as coworkers
+and friends. In other words, the specific characteristics
+of the individuals (nodes) can influence the formation of
+connections (edges) in the network. In such cases, geo-
+metric networks provide a suitable framework to model
+contact networks. In geometric networks, nodes are as-
+signed coordinates in a metric space, and edges are more
+likely to be formed between nodes closer in the metric
+space [22, 23]. When modelling real-world networks with
+geometric network models, the coordinates assigned to
+nodes represent the characteristics that affect their con-
+nections.
+Let us refer to the tendency to form connections based
+on proximity within an underlying metric space as spa-
+tiality. The level of spatiality differs between various net-
+work models. Configuration model networks, including
+Erd˝ os-R´ enyi graphs, lack spatial structure. In contrast,
+random geometric graphs exhibit maximal spatiality. In
+a random geometric graph, the nodes are uniformly dis-
+tributed within a unit square in ad-dimensional Eu-
+clidean space. Here, we assume that our space is two-
+dimensional and that the nodes are distributed accord-
+ing to a Poisson point process with intensityρ. An edge
+is formed between two nodes if their Euclidean distance
+is less than
+p
+⟨k⟩/(πρ), where⟨k⟩is the average de-
+gree of the network. Both random geometric graphs and
+Erd˝ os-R´ enyi graphs exhibit the Poisson degree distribu-
+tion. Hence, any difference in dynamics in these two net-
+work models arises from the presence of spatial structure
+in random geometric graphs and the lack of spatiality in
+Erd˝ os-R´ enyi graphs.
+Furthermore, we use the heterogeneous spatial network
+(HSN) model, introduced by Bogu˜ n´ a et al. [24], to ex-
+plore the behaviour of the reproduction number across
+the spatiality and degree heterogeneity spectrum. In the
+HSN model, each node is assigned an expected degree
+and coordinates in the metric space. Given these node
+characteristics, the model generates an undirected net-
+work where (i) the degree of each node is a Poisson ran-
+dom variable with a mean equal to the expected degree
+of the node, and (ii) the nodes are more likely to be
+linked with each other if they are close to each other in
+the metric space. The spatiality of the network, that is,
+the propensity of the nodes to connect to other nodes in
+their proximity, is governed by an independent param-
+eter called the temperature, denoted byτ. High values
+ofτcorrespond to the configuration model, where nodes
+form connections randomly regardless of their positions.
+In contrast, asτ→0, nearby nodes are more likely to be
+connected, resulting in a strongly spatial network. We
+use this model to generate networks with negative bino-
+mial degree distributions with varying levels of spatiality
+controlled byτ. The degree heterogeneity is parame-
+terised by the dispersion parameterrof the binomial
+distribution; a smallerrimplies a more heterogeneous
+degree distribution.
+III. RESUL TS
+A. The basic reproduction number
+In this section, we discuss the basic reproduction num-
+ber,R 0, in Erd˝ os-R´ enyi graphs and random geometric
+graphs. Recall that, in our setup, infection starts spread-
+ing from a single initially infected individual,u 0. Hence,
+the basic reproduction number is equal to the expected
+number of nodes in the first generation because every
+node in the first generation is necessarily infected byu 0.
+Moreover, each node in the first generation is a neighbor
+ofu 0 in the EPN.
+The basic reproduction number in an arbitrary net-
+work depends on the transmission probability, the ex-
+pected node degree, and the presence of short loops. Let
+us first discuss the case where the contact network is a
+tree, which contains no loops. Under this assumption,
+the EPN is also a tree. Since there is exactly one path
+between two nodes in a tree, all neighbors ofu 0 in the
+EPN belong to the first generation and can only get in-
+fected through the edge fromu 0. Therefore, the basic
+reproduction number in a tree is given by
+R0 =T⟨k⟩,(4)
+where⟨k⟩is the average degree andTis the transmission
+probability.
+In contrast, the presence of triangles results in a
+smaller basic reproduction number. If an edge exists
+between two neighbors of the initially infected nodeu 0,
+there are two distinct paths through which the infection
+===== PAGE 4 =====
+4
+A B
+C
+Initially
+infected
+node
+Secondary
+infected
+node
+Susceptible
+node
+Transmission
+edge
+EPN edge
+ n1=4
+n1=3
+R0(A)=4.0
+p(A)=0.001
+R0(A)=3.5
+p(A)=0.062
+R0(A)=2.83
+p(A)=0.16
+R0(A)=2.49
+p(A)=0.224
+FIG. 1.The basic reproduction number in a random
+geometric graph.(A) Visualization of a random geometric
+graph. The nodes relevant for the computation of the basic
+reproduction numberR 0, defined as the expected number of
+neighbors (in blue) infected directly by the initially infected
+node (in red), are shown in the circle. (B) In the presence
+of an EPN edge between neighbors, the same EPN configu-
+ration can lead to two different numbers of nodes in the first
+generation,n 1. (C) An initially infected node (in red) with
+the same degree can have different neighborhood isomorphic
+classesA, each occurring with probabilityp(A) and resulting
+in the expected number of secondary cases,R 0(A).
+1 3 5 7 9 11 13 15 17 19
+generation g
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6PMF
+ERG
+RGG
+FIG. 2.The distribution of the generationgof the
+neighbors of the initially infected node in Erd˝ os-
+R´ enyi graphs (ERGs) and random geometric graphs
+(RGGs).The network size isN= 10 4 and the average de-
+gree is⟨k⟩= 12. The transmission rate isβ= 1, and the
+recovery rate isα= 0.001. The result is an average over 200
+runs.
+can spread fromu 0 to each of the two neighbors. The
+first path directly traverses the edge betweenu 0 and the
+neighbor. The second is a path of length two that goes
+fromu 0 to the other neighbor and then traverses the
+edge between the neighbors. These two paths compete
+in transmission, and the infection will travel along the
+path with the shorter transmission time (Fig. 1B). The
+susceptible neighbor will get infected through the edge
+with the least transmission time.
+1 3 5 7 9 11
+average degree k
+1
+3
+5
+7
+9
+11R0
+ERG
+A
+T=0.99
+T=0.5
+T=0.25
+1 3 5 7 9 11
+average degree k
+1
+3
+5
+7
+9
+11
+RGG
+B
+0.0 2.5 5.0 7.5 10.0 12.5 15.0 17.5 20.0
+T k
+0.6
+0.7
+0.8
+0.9
+1.0
+RRGG
+0  / RERG
+0
+C
+y=1
+FIG. 3.The basic reproduction numberR 0 as a
+function of average degree⟨k⟩and transmission prob-
+abilityT.A) ShowsR 0 as a function of⟨k⟩for Erd˝ os-
+R´ enyi graphs (ERGs) and B) for random geometric graphs
+(RGGs). C) Shows the ratio betweenR 0 in RGG toR 0 in
+ERG as a function ofT⟨k⟩. The transmission probability is
+T∈ {0.25,0.5,0.99}. Each simulation and analytical result
+(points and lines, respectively) is an average over 500 runs
+on a network of sizeN= 10000. For ERGs, the analytical
+lines follow the tree-like assumption of Eq. (4). For RGGs,
+the analytical lines are calculated from Eq. (13).
+Figure 2 shows the probability distribution for the gen-
+eration of the neighbors of the initially infected node in
+the EPN. As this figure shows, in an Erd˝ os-R´ enyi graph,
+the only way a susceptible neighbor is not directly in-
+fected by the initially infected node is when the transmis-
+sion travels through a long cyclic path and reaches the
+neighbor before direct transmission occurs. Figure 3A
+compares the value ofR 0 for Erd˝ os-R´ enyi graphs with
+different expected degree values with their equivalent in
+a tree, Eq. (4). For a small expected degree, Eq. (4)
+provides an accurate approximation
+In random geometric graphs, however, triangles in the
+EPN are not negligible. As Fig. 2 shows, a significant
+fraction of neighbors belong to the second and third gen-
+erations, meaning that they have been infected through
+paths of length two and three. Nodes in random geo-
+metric graphs are connected based on proximity, which
+increases the frequency and influence of short loops com-
+pared to long loops as pathways for infecting the neigh-
+bors of the initially infectious individual. In particular,
+loops of length three—the shortest possible—play a cru-
+cial role in determining the basic reproduction number.
+In the following, we present a more precise approxi-
+mation ofR 0 in random geometric graphs by explicitly
+accounting for loops of length three. This approximation,
+which we elaborate in the following, is in good agreement
+with simulation results, as shown in Fig. 3B.
+The initially infected nodeu 0 can transmit the infec-
+tion to its neighbors until it recovers. The basic reproduc-
+tion number,R 0, equals the expected number of neigh-
+bors infected directly from a randomly chosenu 0. Let
+===== PAGE 5 =====
+5
+us focus on the subgraph of the contact network induced
+byu 0 and the set of its neighbors, denoted byN(u 0)
+(Fig. 1A). For simplicity, we relabel the initially infected
+node asu 0 = 0 and other nodes in this subgraph as
+i∈ N(0) fori= 1, . . . , k, wherek=|N(0)|is the degree
+of node 0. We represent the structure of the subgraph
+induced by the nodes in set{0} ∪ N(0) by an adjacency
+matrixA, where the first row/column corresponds to the
+initially infected node. Then,A 0i = 1 for alli∈ N(0)
+andA ij = 1 ifiandjare connected.
+In this setup, the basic reproduction number can be
+computed as
+R0 =
+X
+A
+R0(A)p(A),(5)
+wherep(A) denotes the probability of configurationA
+andR 0(A) is the basic reproduction number for a specific
+configurationAaround node 0.
+We calculatep(A) by generating random geometric
+graphs withNnodes and expected degree⟨k⟩, and re-
+peatedly sampling the neighborhood of a randomly cho-
+sen node. By counting the times eachAappears, we
+can find the ensemble of all adjacency matricesAin a
+network with a certain average degree⟨k⟩and calculate
+p(A) (Fig. 1C).
+To calculateR 0(A), we make the simplifying assump-
+tion that nodes inN(0) become infected either through
+paths of length one (single edges) or two from node 0.
+Hence, nodei∈ N(0) will remain susceptible, or get in-
+fected either by node 0 through the path 0→ior by an
+already infected neighborj∈(N(0)∩ N(i)) through the
+path 0→j→i. The number of paths of length two from
+node 0 to its neighboriis given by
+A2
+0i =
+kX
+j=0
+A0jAji,(6)
+and uniquely determined byA.
+Nodeican be infected through its common neighbor
+with node 0 that was infected earlier. We represent the
+set of such neighbors byV i
+Vi ={j|j∈(N(0)∩ N(i)), t 0→j < t0→i}.(7)
+In the following, we proceed in four steps. First, we
+compute the probability distribution of the cardinality
+|Vi|, which represents the number of competitors of the
+initially infected node 0 attempting to infect nodei. Sec-
+ond, we determine the probability that the transmission
+time from node 0 to nodeiis shorter than the recovery
+time of node 0. Third, we evaluate the probability that
+node 0 infects nodeibefore any other node inV i. Finally,
+by combining the results of the previous three steps for
+alli∈ N(0), we deriveR 0(A).
+By lettingσdenote the permutation onN(0), where
+σ(j)< σ(i) indicatest 0→j < t0→i, we can write the
+probability of the cardinality of setV i as
+p(|Vi|=m|A 2
+0i, σ(i) =π)
+= 1 k−1
+A2
+0i
+
+π−1
+m
+ k−π
+A2
+0i −m
+
+. (8)
+Next, the probability that the initial node 0 can trans-
+mit the disease toibefore recovering, conditioned on
+σ(i), is
+p(t0→i < r0 |σ(i) =π) =
+P
+σ:σ(i)=π p(t0→i < r0, σ)
+p(π)
+=k!
+Z ∞
+0
+dx1βe−βx1 · · ·
+Z ∞
+xσ(i)−1
+dxπβe−βxπ
+Z ∞
+xπ
+drαe−αr
+×
+Z ∞
+xπ
+dxπi+1βe−βxπ+1 · · ·
+Z ∞
+xk−1
+dxkβe−βxk
+= k!
+(k−π)!
+πY
+j=1
+β
+α+ (k−π+j)β .
+(9)
+Finally, to complete the chain of conditional probabil-
+ities, we assume that the transmission from node 0 to
+nodeitakes place before node 0 recovers, i.e.,t 0→i < r0.
+This impliest 0→j < r0 for allj∈V i. To infect nodei,
+node 0 competes with all neighbors ofiinV i that can
+transmit the infection toibefore they recover. Then,
+the probability that transmission takes place through the
+path 0→i, conditioned ont 0→i < r0 and|V i|, is
+p(10→i = 1|t 0→i < r0,|V i|=m)
+=
+mX
+x=0
+m
+x
+ T m(1−T) m−x
+x+ 1 , (10)
+whereT=β/(α+β) is the transmission probability, and
+the indicator function1 0→i is defined as
+10→i =
+(
+1 if transmission happens through edge (0, i)
+0 otherwise.
+(11)
+The probabilityR(1 0→i = 1|σ(i) =π, A 2
+0i) that a
+nodei∈ N(u 0) gets infected through the path 0→i,
+conditioned onσandA, is
+R(10→i = 1|σ(i) =π, A 2
+0i)
+=p(t 0→i < r0 |σ(i) =π)
+×
+A2
+0iX
+m=0
+p(10→i = 1|t 0→i < r0,|V i|=m)
+×p(|V i|=m|A 2
+0i, σ(i) =π).
+(12)
+Summing over all values ofσ(i) and all nodesi,R 0(A) is
+R0(A) =
+kX
+i=1
+kX
+π=1
+1
+k R(10→i = 1|σ(i) =π, A 2
+0i). (13)
+===== PAGE 6 =====
+6
+The SI dynamic is a special case whereT= 1. Then,
+R0(A) can be written as
+R0(A) =
+kX
+i=1
+1
+1 +A 2
+0i
+A2
+0iX
+l=0
+1
+1 +l . (14)
+Figure 3C compares the ratio of the basic reproduction
+numberR 0 in random geometric graphs toR 0 in Erd˝ os-
+R´ enyi graphs as a function ofT⟨k⟩. As the transmission
+probability and the average degree increase, the differ-
+ence inR 0 between the random geometric graph and the
+Erd˝ os-R´ enyi graph becomes more pronounced, withR0 in
+the random geometric graph approaching approximately
+half of the value ofR 0 in the Erd˝ os-R´ enyi graph. It is
+worth highlighting that this is due to the spatiality alone,
+as the average degree, the degree distribution, the trans-
+mission probability, and the network size are the same
+for both graphs.
+While the value ofR 0 in both Erd˝ os-R´ enyi graphs and
+random geometric graphs deviates from that of a tree
+with the same average degree and degree heterogeneity,
+this deviation is more pronounced in random geomet-
+ric graphs (Fig. 3). The main difference inR 0 between
+Erd˝ os-R´ enyi graphs and random geometric graphs arises
+from the contribution of loops of various lengths in trans-
+mitting the infection (Fig. 2). Although short loops are
+negligible in Erd˝ os-R´ enyi graphs, these graphs contain a
+significant number of long loops. However, since trans-
+mission along a long path is, on average, slower than
+transmission across a single edge, the probability that it
+competes with direct transmission from the initially in-
+fected node to its neighbor is small, resulting in a smaller
+deviation from tree-like behavior.
+B. The reproduction number per generation
+In this section, we will derive the reproduction num-
+ber per generationR g for Erd˝ os-R´ enyi graphs and ran-
+dom geometric graphs. We first focus on SI dynamics,
+modelled by first passage percolation. For Erd˝ os-R´ enyi
+graph, we will base our argument on the branching pro-
+cess on finite graphs, and for random geometric graphs,
+we show how the spatial constraint on network forma-
+tion will affect the reproduction chance. Then, we study
+the SIR dynamics by mapping it to a special case of first
+passage percolation.
+As defined in Eq. (3),R g is determined by the num-
+ber of nodes in each generation,n g. To deriven g for
+Erd˝ os-R´ enyi graphs, we present a theory introduced by
+Bhamidi et al. [25]. Consider first-passage percolation,
+where the transmission times of edgest i→j are indepen-
+dent and identically distributed random variables with
+an exponential distributionp(t i→j) =e −ti→j . Theorem
+1 characterizes the probability distribution for the gen-
+eration of an infected individual in networkG.
+Theorem 1LetGbe an Erd˝ os-R´ enyi graph withnnodes
+and average degree⟨k⟩>1. Thenp(g), the probability
+0 20 40 60 80 100
+generation g
+0
+1
+2
+3
+4
+5
+6
+Rg
+SI Dynamics
+ERG
+RGG
+0 25 50 75 100
+generation g
+0.0
+0.5
+1.0
+ng (CDF)
+FIG. 4.The reproduction number per generationR g.
+Results are shown for the SI dynamics on Erd˝ os-R´ enyi graphs
+(ERGs) and random geometric graphs (RGGs). The inner
+plot illustrates the normalized number of nodes per genera-
+tionn g. Points indicate simulations and lines show analytical
+results. All networks have sizeN= 10 4 and average degree
+⟨k⟩= 6. Results are averaged over 500 runs.
+that an infected individual belongs to generationg, is as
+below
+p(g) =N(alog(n), alog(n)),(15)
+whereNis the standard normal distribution, and
+a= ⟨k⟩
+⟨k⟩ −1.(16)
+Since the reproduction number per generation,R g, is de-
+fined as the ratio between the numbers of individuals in
+consecutive generations as in Eq. (3), we have
+Rg = p(g+ 1)
+p(g) = exp
+
+1− 1 + 2g
+2alogn
+
+.(17)
+Hence, in Erd˝ os-R´ enyi graphs,Rg decays exponentially
+until the percolation process halts, as illustrated in Fig. 4.
+This rapid decline results in a smallg max.
+We now proceed to calculatingR g for SI dynamics in
+random geometric graphs, where our strategy is again
+to deriven g. For this, we first calculate the average
+time of infection per generation. Nodeiwhich belongs
+to generationghas at least one neighbor from gen-
+erationg−1. Consider the set of random variables
+X g
+i ={t j→i |j∈ N(i), g(j) =g−1, t j < ti}wheret i→j
+is the transmission time along the edgei→j. Define
+Y g
+i = minX g
+i as the time difference between the infec-
+tion of nodeiand the node that infects it. By definition,
+the cumulative distribution function ofY g
+i is given by
+FY g
+i
+(y) =P(Y g
+i ≤y) = 1−
+Y
+x∈X g
+i
+P(x > y) = 1−e−β|X g
+i |y
+(18)
+===== PAGE 7 =====
+7
+where|X g
+i |is the cardinality of the setX g
+i . The last
+equality holds sincet i→j follows an exponential distribu-
+tion,P(x > y) =e−βy . The expected value ofY g
+i is
+E[Y g
+i ] = 1
+β|X g
+i | .(19)
+The average ofE[Y g
+i ] over all nodes in generationg, de-
+noted byE[Y g], is
+E[Y g] = 1
+β E
+ 1
+|X g
+i |
+
+= 1
+βmg
+,(20)
+where we introduce
+mg =E
+ 1
+|X g
+i |
+−1
+.(21)
+We assumem g is a function of transmission rateβand
+average degree⟨k⟩and does not depend on generation,
+i.e.,m g = ¯m(⟨k⟩, β). This is empirically validated as
+shown in SI Fig. 7. Hence,
+E[Y g] = 1
+β¯m(⟨k⟩, β).(22)
+Lett g denote the expected time of infection for a node
+in generationg. Then,
+tg =t g−1 +E[Y g].(23)
+Combining Eqs. (22) and (23), we can conclude
+tg =
+gX
+x=1
+E[Y g] = g
+⟨k⟩¯m(⟨k⟩, β).(24)
+Equation (24) indicates that the expected time of infec-
+tion per generationt g is linearly proportional to the gen-
+erationg.
+The next step is to find the number of nodes infected
+as a function of time. We locate the initially infected
+nodeu 0 at the origino, andυ d denotes the volume of the
+unit ball inR d. DefineH t as the subset of nodes reached
+by the SI dynamics starting from the origin by the time
+t. LetB(x, s) be the Euclidean ball centred atxwith
+radiuss. Theorem 1.1 in Coletti et al. [26] indicates that
+there exists a constantϕ >0 such that for anyε∈(0,1),
+almost surely for larget:
+(1−ε)B(o, ϕ)⊆ 1
+t Ht ⊆(1 +ε)B(o, ϕ).(25)
+Combining Eqs. (24) and (25), we can conclude that
+gX
+x=0
+nx =Cg 2,(26)
+whereCis a constant related to the node density. Now,
+we can calculate the reproduction number as
+Rg = 2g+ 1
+2g−1 .(27)
+Hence, asgincreases,R g converges to unity, in agreement
+with the simulation results shown in Fig. 4.
+In SIR dynamics, each edge (i, j) can transmit the dis-
+ease fromitojift ij < ri. The probability of transmis-
+sion timet ij, conditioned ont ij < ri is
+P(t ij|tij < ri) = P(t ij, tij < ri)
+P(t ij < ri) ,(28)
+where
+P(t ij < ri) = β
+α+β ,(29)
+and
+P(t ij, tij < ri) =βe −βtij
+Z ∞
+tij
+αe−αxdx=βe −(α+β)tij .
+(30)
+Hence,
+P(t ij|tij < ri) = (α+β)e −(α+β)tij .(31)
+The transmission time of edges in the EPN still follows
+the exponential distribution, but with rateα+β. As a
+result, the reproduction number per generation under the
+SIR dynamics follows Eqs. (17) and (27) for Erd˝ os-R´ enyi
+graphs and random geometric graphs, respectively.
+Figure 4 illustrates the reproduction numberR g as a
+function of generationgfor Erd˝ os-R´ enyi graphs and ran-
+dom geometric graphs. The inset plot shows that then g
+results from the simulations of both Erd˝ os-R´ enyi graphs
+and random geometric graphs are in agreement with the
+analytical results presented in Eqs. (15) and (26), respec-
+tively. In Erd˝ os-R´ enyi graphs,Rg decays exponentially
+until the outbreak ends due to limited network size. In a
+random geometric graph, the decay inR g is faster than
+Erd˝ os-R´ enyi graphs in the beginning untilRg reaches
+unity. Asn g grows cumulatively withg 2,R g remains
+equal to unity until percolation halts and no more In-
+fected nodes are produced.
+It is worth highlighting that the difference in Erd˝ os-
+R´ enyi graphs and random geometric graphs in terms of
+Rg is due to the spatial network structure and is not
+caused by differentR 0 values (SI Fig. 6).
+C. The reproduction numberR g is determined by
+the competition between neighbors
+In this section, we explain how the reproduction num-
+ber per generation can be concluded from the competi-
+tion between infected nodes in each generation, regard-
+less of the network structure.
+Similarly to our argument for the basic reproduction
+number, let us first consider the case where the contact
+network is formed by a branching process that results in
+a tree. In such a tree, since there are no loops, when a
+node becomes infected, it has only one infected neighbor:
+===== PAGE 8 =====
+8
+the node that transmitted the disease to it. Therefore,
+Rg remains equal toR 0 until it drops to zero.
+However, in a network with loops, when a suscepti-
+ble node becomes infected, there may be more than one
+neighbor that was infected earlier. In that case, these
+infected neighbors will compete to transmit the disease
+to the susceptible node. If a susceptible node has more
+infected neighbors at the time of its infection, the compe-
+tition to infect it is stronger, and the chance of transmis-
+sion for each infected individual is lower. Because of this
+competition, as the number of infected nodes increases,
+the reproduction number decreases fromR 0, in contrast
+to the tree case.
+Figure 5A shows the average fraction of each node’s
+neighbors infected earlier than the node, denoted by
+nb(g), as a function of the generationgof the node for
+Erd˝ os-R´ enyi graphs and random geometric graphs. In an
+Erd˝ os-R´ enyi graph, the fraction of infected neighbors of a
+susceptible node increases rapidly. This is because, as the
+population of infected nodes becomes larger, the chances
+of neighbors being infected increase. On the other hand,
+in random geometric graphs, this fraction increases more
+quickly with the generation, until it reaches the value of
+0.5, i.e., half of the neighbors of a susceptible node are
+infected, after which it remains constant.
+The fractionn b(g) determines the value ofR g. The
+number of secondary infected individuals for a node in
+generationgdepends on the number of susceptible neigh-
+bors of the node at the time of its infection and the com-
+petition it faces when attempting to infect them. Since
+a node in generationg+ 1 gets infected through an edge
+leading to a node in generationg, we can conclude that
+a node in generationgwill infect each of its neighbors
+with probability 1/(⟨k g+1⟩nb(g+ 1)), where⟨k g⟩is the
+average degree of a node in generationg. A node in
+generationghas on average⟨k g⟩(1−n b(g)) susceptible
+neighbors when it gets infected and starts spreading the
+infection. Therefore,R g, the expected number of sec-
+ondary infections caused by a node infected in generation
+g, is
+Rg = ⟨kg⟩(1−n b(g))
+⟨kg+1⟩nb(g+ 1) .(32)
+Figure 5A shows the relationship betweenR g (scatter
+plot) and⟨k g⟩(1−n b(g))/(⟨k g+1⟩nb](g+ 1)) (line plot)
+as a function of generationgfor Erd˝ os-R´ enyi graphs
+and random geometric graphs. In Erd˝ os-R´ enyi graphs,
+nb(g) exponentially increases, as a result,R g decays
+exponentially. In a random geometric graph, however,
+nb(g) first increases rapidly and then remains constant
+atn b(g)≈0.5 until the epidemic dies out. Hence
+Rg = 1
+nb
+−1 = 1 for large enoughg.(33)
+Here, we use the fact that⟨k g−1⟩ ≈ ⟨kg⟩in random geo-
+metric graphs.
+This relationship betweenR g andn b generalizes to a
+wider range of networks beyond Erd˝ os-R´ enyi graphs and
+random geometric graphs. We validate this across the full
+spectrum of spatiality and degree heterogeneity using the
+heterogeneous spatial network (HSN) model. Figure 5B
+shows the relationship between the two sides of Eq. (32)
+as a function of generationg. Regardless of degree het-
+erogeneity determined byr, in a network with spatial
+structure,R g goes to unity for large enoughg, a behav-
+ior fully explained by the competition between infected
+neighbors at the time of infection. As Fig. 5C shows, the
+decrease ofR g from unity towards zero becomes more
+gradual as the temperatureτdecreases, i.e., spatiality
+increases.
+Figure 5D shows the maximum generationg max for
+SI dynamics as a function of the dispersion parameterr
+and the temperatureτ. Higherg max indicates a slower
+decay in the tail ofR g, as we observed for random geo-
+metric graphs. Moving from the random to spatial net-
+works (high temperature to low temperature), theg max
+increases significantly aroundτ= 0.3, and the decay in
+Rg becomes slower until lim g→∞ Rg = 1 as the network
+becomes spatial.
+IV. CONCLUSION
+In this paper, we have studied the effect of spatially
+embedded contact patterns on the basic and effective re-
+production numbers. We represent the spatial structure
+of the population using network epidemic models. To
+facilitate our analysis, we introduced the reproduction
+number per generation,R g, defined as the expected num-
+ber of new infections caused by nodes in generationg.
+With a random contact structure, as captured by
+Erd˝ os-R´ enyi graphs, the basic reproduction number can
+be approximated by the size of the first generation in a
+branching process with intensity proportional to the av-
+erage degree of the network and the transmission prob-
+ability. However, when the contacts are spatially con-
+strained, as captured by random geometric graphs, we
+observed that the basic reproduction numberR 0 is lower
+than predicted by the branching process with the same
+intensity (Figure 3). This is because the spatial con-
+tact structure leads to the formation of triangles and
+other short loops, reducing the likelihood of direct dis-
+ease transmission from the initially infected individual to
+its neighbors. To account for the impact of short loops
+in random geometric graphs, we included loops of length
+three (triangles) in our calculation ofR 0. Comparing
+our analytical results with simulations demonstrates that
+incorporating these loops can substantially improve the
+accuracy of theR 0 estimate.
+As infection spreads in an Erd˝ os-R´ enyi graph where
+there are no spatial constraints, the reproduction num-
+ber per generation,R g, decreases exponentially until it
+reaches zero, marking the end of the spreading. How-
+ever, in the spatial case modelled by random geomet-
+ric graphs, this decline is faster than exponential un-
+tilR g ≈1 (Figure 4). At that point,R g remains ap-
+===== PAGE 9 =====
+9
+0 20 40 60 80 100
+generation g
+0
+1
+2
+3
+4
+5
+Rg
+A
+ERG
+RGG
+0 20 40 60 80 100
+generation g
+0
+1
+2
+3
+4
+5
+Rg
+B
+r = 2
+r = 4
+r = 16
+0 20 40 60 80 100
+generation g
+0
+1
+2
+3
+4
+5
+Rg
+C
+= 0.33
+= 0.2
+= 0.01
+10 2
+ 10 1
+ 100 101
+temperature 
+20
+40
+60
+80
+100gmax
+D
+Neg.Binom. r=2
+Neg.Binom. r=4
+Neg.Binom. r=8
+Neg.Binom. r=16
+0 25 50 75 100
+generation g
+0.2
+0.5
+0.8
+1.1nb(g)
+0 25 50 75 100
+generation g
+0.2
+0.5
+0.8
+1.1nb(g)
+0 25 50 75 100
+generation g
+0.2
+0.5
+0.8
+1.1nb(g)
+FIG. 5.The reproduction number per generationR g and competition between infected nodes.(A-C) Points
+indicateR g, and lines correspond to the right-hand side of Eq. (32) as a function of generationg. Insets shown b(g). A) Results
+for Erd˝ os-R´ enyi graphs (ERGs) and random geometric graphs (RGGs). B) Results for HSNs with negative binomial degree
+distributions with dispersion parameterr∈[2,4,16] and spatialityτ= 0.01. C) Results for HSNs with negative binomial degree
+distributions with dispersion parameterr= 16 and spatialityτ∈[0.33,0.2,0.01]. D) Shows the total number of generations
+gmax = max{g|Rg >0}. Results are shown for the temperaturesτ∈(10 −2,10) and the dispersion parametersr∈[2,4,8,16].
+All Results correspond to SI dynamics. All HSNs have sizeN= 5000, while ERGs and RGGs have sizeN= 10 4. All networks
+have average degree⟨k⟩= 6. Results are averaged over 10000 simulation runs.
+proximately constant until the epidemic dies out and no
+further generations are produced. This behavior is con-
+firmed analytically by examining the number of nodes in
+each generation. In Erd˝ os-R´ enyi graphs, the probability
+of an infected node belonging to each generation follows
+a normal distribution (Eq. 15). In contrast, in random
+geometric graphs, the number of nodes reached by perco-
+lation up to a given generation grows quadratically with
+the number of generations (Eq. 25).
+We have shown thatR g is determined by the levels
+of competition between infected nodes to transmit the
+disease to susceptible nodes in generationsgandg+ 1,
+independently of the underlying network structure. This
+competition is caused by the presence of loops in the net-
+work, and can be quantified by the fraction of neighbors
+infected earlier,n b.
+We have shown that increasing network spatiality,
+which increases the amount of loops, shifts the behav-
+ior ofR g from an exponentially decreasing regime to one
+in whichR g converges toR g ≈1 (Figure 5). We note
+thatn b(g) is related to the notion of force of infection
+in epidemiology. Thus, the asymptotic value ofR g = 1
+arises from a generation-invariant force of infection.
+Our findings raise questions about the conventional use
+of reproduction numbers as a tool for identifying conta-
+giousness and predicting the epidemic dynamics. In a
+homogeneously mixed population, the contagiousness of
+a disease can be straightforwardly represented by the ba-
+sic reproduction number. However, our findings suggest
+that the network structure also plays an important role in
+determining the basic reproduction number, and should
+be taken into account for assessing the contagiousness.
+In addition, the trend in the effective reproduction num-
+ber is often simply extrapolated to make short-term pre-
+dictions about the course of the disease spreading. For
+example, a rapid decrease in the effective reproduction
+number towards one is usually interpreted as a sign that
+the outbreak is approaching its peak and that infections
+will soon begin to decline. In this work, we have shown
+that this is not the case in populations with spatial struc-
+ture, whereR g can stabilise at unity for an extended pe-
+riod before eventually dropping to zero. This suggests
+that conclusions based on a simple extrapolation may be
+misguided. We note that the convergence of the effective
+===== PAGE 10 =====
+10
+reproduction number to unity is consistent with the pre-
+viously observed polynomial epidemic growth in empiri-
+cal studies [10–13], making spatial structure a plausible
+explanation for these observations.
+The reproduction number gained significant attention
+during the COVID-19 pandemic. Both the basic repro-
+duction number,R 0, and the effective reproduction num-
+ber,R eff , have been widely used to evaluate interventions
+and guide policy decisions, making an in-depth investi-
+gation of these measures essential. In our view,R 0 has
+been historically something of an overloaded concept: a
+single parameter that captures the epidemic threshold,
+the contagiousness of the disease, its early-stage dynam-
+ics, and the final epidemic size. We argue that these dif-
+ferent concepts need to be decoupled and carefully exam-
+ined individually. In particular,R 0 is a composite that
+represents both the contact structure and the intrinsic
+transmissibility of the disease. Our findings suggest that
+accurately assessing the stage of an epidemic and antici-
+pating its future trajectory fromR 0 requires accounting
+for the underlying contact structure.
+ACKNOWLEDGMENTS
+J.S. and T.H. are supported by the Strategic Research
+Council (SRC) established within the Research Coun-
+cil of Finland (Decision Numbers: 364386 and 364371).
+The calculations presented above were performed using
+computer resources within the Aalto University School
+of Science “Science-IT” project.
+[1] R. M. Anderson and R. M. May,Infectious Diseases
+of Humans: Dynamics and Control(Oxford University
+PressOxford, 1991).
+[2] J. S. Huisman, J. Scire, D. C. Angst, J. Li, R. A. Neher,
+M. H. Maathuis, S. Bonhoeffer, and T. Stadler, Estima-
+tion and worldwide monitoring of the effective reproduc-
+tive number of SARS-CoV-2, eLife11, e71345 (2022).
+[3] S. Flaxman, S. Mishra, A. Gandy, H. J. T. Unwin, T. A.
+Mellan, H. Coupland, C. Whittaker, H. Zhu, T. Berah,
+J. W. Eaton, M. Monod, Imperial College COVID-19 Re-
+sponse Team, P. N. Perez-Guzman, N. Schmit, L. Cilloni,
+K. E. C. Ainslie, M. Baguelin, A. Boonyasiri, O. Boyd,
+L. Cattarino, L. V. Cooper, Z. Cucunub´ a, G. Cuomo-
+Dannenburg, A. Dighe, B. Djaafara, I. Dorigatti, S. L.
+Van Elsland, R. G. FitzJohn, K. A. M. Gaythorpe,
+L. Geidelberg, N. C. Grassly, W. D. Green, T. Hal-
+lett, A. Hamlet, W. Hinsley, B. Jeffrey, E. Knock, D. J.
+Laydon, G. Nedjati-Gilani, P. Nouvellet, K. V. Parag,
+I. Siveroni, H. A. Thompson, R. Verity, E. Volz, C. E.
+Walters, H. Wang, Y. Wang, O. J. Watson, P. Win-
+skill, X. Xi, P. G. T. Walker, A. C. Ghani, C. A.
+Donnelly, S. Riley, M. A. C. Vollmer, N. M. Ferguson,
+L. C. Okell, and S. Bhatt, Estimating the effects of non-
+pharmaceutical interventions on COVID-19 in Europe,
+Nature584, 257 (2020).
+[4] A. Pan, L. Liu, C. Wang, H. Guo, X. Hao, Q. Wang,
+J. Huang, N. He, H. Yu, X. Lin, S. Wei, and T. Wu, As-
+sociation of Public Health Interventions With the Epi-
+demiology of the COVID-19 Outbreak in Wuhan, China,
+JAMA323, 1915 (2020).
+[5] J. Wallinga and P. Teunis, Different Epidemic Curves
+for Severe Acute Respiratory Syndrome Reveal Similar
+Impacts of Control Measures, American Journal of Epi-
+demiology160, 509 (2004).
+[6] R. S. Dhillon, D. Srikrishna, and G. Chowell, Getting
+to zero in the DR Congo Ebola outbreak, The Lancet
+Infectious Diseases20, 395 (2020).
+[7] M. Jeyanathan, S. Afkhami, F. Smaill, M. S. Miller, B. D.
+Lichty, and Z. Xing, Immunological considerations for
+COVID-19 vaccine strategies, Nature Reviews Immunol-
+ogy20, 615 (2020).
+[8] R. N. Thompson, C. A. Gilligan, and N. J. Cunniffe,
+Control fast or control smart: When should invading
+pathogens be controlled?, PLOS Computational Biology
+14, e1006014 (2018).
+[9] L. A. Meyers, B. Pourbohloul, M. Newman, D. M.
+Skowronski, and R. C. Brunham, Network theory and
+SARS: Predicting outbreak diversity, Journal of Theo-
+retical Biology232, 71 (2005).
+[10] S. A. Colgate, E. A. Stanley, J. M. Hyman, S. P. Layne,
+and C. Qualls, Risk behavior-based model of the cubic
+growth of acquired immunodeficiency syndrome in the
+United States., Proceedings of the National Academy of
+Sciences86, 4793 (1989).
+[11] B. Szendr´ oi and G. Cs´ anyi, Polynomial epidemics and
+clustering in contact networks, Proceedings of the Royal
+Society of London. Series B: Biological Sciences271,
+10.1098/rsbl.2004.0188 (2004).
+[12] G. Chowell, C. Viboud, J. M. Hyman, and L. Simonsen,
+The Western Africa Ebola Virus Disease Epidemic
+Exhibits Both Global Exponential and Local Polyno-
+mial Growth Rates, PLoS Currents7, 10.1371/cur-
+rents.outbreaks.8b55f4bad99ac5c5db3663e916803261
+(2015).
+[13] S. Thurner, P. Klimek, and R. Hanel, A network-based
+explanation of why most COVID-19 infection curves are
+linear, Proceedings of the National Academy of Sciences
+117, 22684 (2020).
+[14] G. Chowell, C. Viboud, L. Simonsen, and S. M.
+Moghadas, Characterizing the reproduction number of
+epidemics with early subexponential growth dynamics,
+Journal of The Royal Society Interface13, 20160659
+(2016).
+[15] M. Kiskowski and G. Chowell, Modeling household and
+community transmission of Ebola virus disease: Epi-
+demic growth, spatial dynamics and insights for epidemic
+control, Virulence7, 163 (2016).
+[16] R. Pastor-Satorras, C. Castellano, P. Van Mieghem, and
+A. Vespignani, Epidemic processes in complex networks,
+Reviews of Modern Physics87, 925 (2015).
+[17] M. J. Keeling and K. T. Eames, Networks and epidemic
+models, Journal of The Royal Society Interface2, 295
+(2005).
+[18] M. J. Keeling, The effects of local spatial structure on
+===== PAGE 11 =====
+11
+epidemiological invasions, Proceedings of the Royal So-
+ciety of London. Series B: Biological Sciences266, 859
+(1999).
+[19] E. Kenah and J. M. Robins, Second look at the spread
+of epidemics on networks, Physical Review E76, 036113
+(2007).
+[20] B. Karrer and M. E. J. Newman, Message passing ap-
+proach for general epidemic models, Physical Review E
+82, 016101 (2010).
+[21] M. E. J. Newman, Spread of epidemic disease on net-
+works, Physical Review E66, 016128 (2002).
+[22] M. Bogu˜ n´ a, I. Bonamassa, M. De Domenico, S. Havlin,
+D. Krioukov, and M. ´A. Serrano, Network geometry, Na-
+ture Reviews Physics3, 114 (2021).
+[23] M. Bogu˜ n´ a and R. Pastor-Satorras, Class of correlated
+random networks with hidden variables, Physical Review
+E68, 036112 (2003).
+[24] M. Bogu˜ n´ a, D. Krioukov, P. Almagro, and M.´A. Serrano,
+Small worlds and clustering in spatial networks, Physical
+Review Research2, 023040 (2020).
+[25] S. Bhamidi, R. van der Hofstad, and G. Hooghiemstra,
+First passage percolation on random graphs with finite
+mean degrees, The Annals of Applied Probability20,
+1907 (2010).
+[26] C. F. Coletti, L. R. De Lima, A. Hinsen, B. Jahnel, and
+D. Valesin, Limiting shape for first-passage percolation
+models on random geometric graphs, Journal of Applied
+Probability60, 1367 (2023).
+V. APPENDIX
+0 20 40 60 80 100
+generation g
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+Rg
+SI Dynamics
+ERG
+RGG
+FIG. 6.The reproduction number per generationR g
+for networks with the same basic reproduction num-
+berR 0.Results are shown for the SI dynamics on Erd˝ os-
+R´ enyi graphs (ERGs) and random geometric graphs (RGGs).
+All networks have sizeN= 10 4 and the basic reproduction
+numberR 0 ≈3. The average degree of the ERG is⟨k⟩= 3
+and the average degree of RGG is⟨k⟩= 6. Results are aver-
+aged over 500 runs.
+0 20 40 60 80 100
+generation g
+0.10
+0.12
+0.14
+0.16
+0.18
+0.20
+mg
+k=6
+k=8
+k=10
+FIG. 7.Average fraction of neighbors infected in
+the generation before the node.Results are shown for
+T= 0.99. The networks are random geometric graphs. All
+networks have sizeN= 10 4. Results are averaged over 200
+simulation runs.

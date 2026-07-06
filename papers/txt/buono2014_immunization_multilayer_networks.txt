@@ -1,0 +1,443 @@
+
+===== PAGE 1 =====
+arXiv:1412.3139v2  [physics.soc-ph]  5 Feb 2015
+epl draft
+Immunization strategy for epidemic spreading on
+multilayer networks.
+C. Buono 1 and L. A. Braunstein 1, 2
+1 Instituto de Investigaciones Físicas de Mar del Plata (IFIMAR)- Departamento de Física
+FCEyN-UNMDP-CONICET Funes 3350 (7600) Mar del Plata, Argent ina.
+2 Center for Polymer Studies, Boston University, Boston, Mass achusetts 02215, USA
+PACS 64.60.aq – Networks
+PACS 87.19.X- – Diseases
+PACS 64.60.ah – Percolation
+Abstract –In many real-world complex systems, individuals have many kind of interactions among
+them, suggesting that it is necessary to consider a layered s tructure framework to model systems
+such as social interactions. This structure can be captured by multilayer networks and can have
+major eﬀects on the spreading of process that occurs over the m, such as epidemics. In this Letter
+we study a targeted immunization strategy for epidemic spre ading over a multilayer network. We
+apply the strategy in one of the layers and study its eﬀect in a ll layers of the network disregarding
+degree-degree correlation among layers. We found that the t argeted strategy is not as eﬃcient as in
+isolated networks, due to the fact that in order to stop the sp reading of the disease it is necessary
+to immunize more than the 80% of the individuals. However, the size of the epidemic is dras tically
+reduced in the layer where the immunization strategy is appl ied compared to the case with no
+mitigation strategy. Thus, the immunization strategy has a major eﬀect on the layer were it is
+applied, but does not eﬃciently protect the individuals of o ther layers.
+Introduction. – The new insights in the complex networks analysis, is no furt her
+considering networks as isolated entities, but characteri zing how networks interact with other
+networks and how this interaction aﬀects processes that occ urs on top of them. A system
+composed by many networks is called Network of Networks (NoN), a terminology introduced
+a few years ago [1–4]. In NoN, there are connectivity links wi thin each individual network,
+and external links that connect each network to other networ ks in the system. A particular
+class of Network of Networks in which the nodes have multiple types of links across diﬀerent
+layers [5–11], are called Multiplex or Multilayer Networks [12]. The multiplex network
+approach has proven to be a successful tool in modeling a numb er of very wide real-world
+systems, such as the Indian air and train transportation net works [13] and the International
+Trade Network [14, 15].
+In the last couple of years, the study of the eﬀect of multiple xity of networks in propa-
+gation processes such as epidemics has been the focus of many recent researches [12, 16–20].
+In Ref [21] the research concentrated in the propagation of a disease in partially overlapped
+multilayer networks, because the fact that individuals are not necessarily present in all the
+layers of a society impacts the propagation of the epidemic. For the epidemic model they
+used the susceptible-infected-recovered (SIR) model [22– 24] that describes the propagation
+of non recurrent diseases for which ill individuals either d ie or, after recovery, become im-
+p-1
+===== PAGE 2 =====
+C. Buono et al.
+mune to future infections. In the SIR model each individual o f the population can be in one
+of three diﬀerent states: Susceptible, Infected, or Recove red. Infected individuals transmit
+the disease to its susceptible neighbors with a probability β and recover after a ﬁxed time tr.
+The spreading process stops when all the infected individua ls are recovered. The dynamic
+of the epidemic is controlled by the transmissibility T , that is the eﬀective probability that
+the disease will be transmitted across any given contact. As in the SIR model an individual
+cannot be reinfected, the disease spreads through branches of infection that have a local
+tree-like structure, and thus, this model, can be described using branching theory approach
+within a generating function formalism [25, 26] that holds i n the thermodynamic limit. In
+[21], they found, theoretically and via simulations, that i n the partially overlapped multi-
+plex network, the epidemic threshold decreases as the overl apped fraction between layers
+increases, due to the fact that, when the overlapping betwee n layers increases, the number of
+paths the disease can take increases. They also found that in the limit of small overlapping
+fraction, the epidemic threshold is dominated by the most he terogeneous layer, this eﬀect
+could have important implications in the implementation of mitigation strategies.
+In a real context, the immunization strategy in social netwo rks is not made at random.
+It is a well known fact that the bigger spreaders in social net works are those individuals with
+higher degrees. Some of the mitigation strategies used in so ciety nowadays are based in this
+phenomena, for example, it is mandatory for all hospital sta ﬀ to get the vaccine against ﬂu
+every year, since they are (in average) the most connected an d exposed individuals in the
+population. This suggests that health agencies always try t o immunize those individuals
+that have, somehow, more chances to get infected and to propa gate the disease. Motivated
+by this, in this Letter we study a strategy in overlapped mult iplex networks where the most
+connected individuals in one layer are identiﬁed and vaccin ated, called targeted immuniza-
+tion strategy. Those immunized overlapped individuals wil l remain immunized in all layers
+of the network.
+Model and Results. –
+Immunization strategy. In our model we use as the substrate for the epidemic spreadin g
+a multiplex network formed by two layers, called A and B, of the same size N , and with
+degree distribution PA(k) and PB(k) which are the probability that a random chosen node
+in layer A and B respectively has degree k. An overlapping fraction q of shared individuals
+is active in both layers.
+For the targeted immunization strategy, we start by immuniz ing a fraction p of the
+highest connected individuals in layer A, and as we assume no degree correlation between
+layers, the immunization in layer B will be at random. Immunized individuals can not be
+infected by the disease and will remain in the susceptible st ate during all the propagation
+process.
+Letψ (k) be the probability that a node is not immunized given that it h as degree k, then
+PA(k)ψ (k) is the probability of a node in layer A to have degree k and not being immunized,
+and
+F A
+0 (x) =
+kmax∑
+k=kmin
+PA(k)ψ (k)xk , (1)
+is the probability generating function for this distributi on [25] and kmin and kmax are the
+minimum and maximum values of the degrees. Note that F A
+0 (1) = 1 −p, where 1 −p is the
+fraction of the non immunized individuals in layer A.
+If we follow a randomly chosen link in layer A, the node we reach has degree distribution
+proportional to kPA(k), rather than just PA(k), because a randomly chosen link is more
+likely to lead to a node with higher degree. Hence the equival ent of Eq. (1) for such a node
+is [25],
+p-2
+===== PAGE 3 =====
+Immunization strategy for epidemic spreading on multilaye r networks.
+F A
+1 (x) =
+∑
+kkPA(k)ψ (k)xk−1
+∑
+kkPA(k) = F A′
+0 (x)
+⟨kA⟩ , (2)
+where ⟨kA⟩ is the average node degree in layer A, and F A′
+0 (x) = dF A
+0 (x)/dx .
+We need to deﬁne the function ψ (k) that will depend on the immunization strategy used.
+For the targeted immunization, in layer A we immunize a fraction p of the higher degree
+nodes, thus, there will be a degree cutoﬀ ks in that layer such that all individuals with degree
+higher than ks, and a fraction w of individuals with degree ks in layer A are immunized.
+Therefore, for this strategy, ψ (k) is,
+ψ (k) =
+
+
+
+0 if k >ks ;
+1 if k <ks ;
+w if k =ks .
+(3)
+The total fraction of immunized individuals p can be written as,
+p =wPA(ks) +
+kmax∑
+k=ks+1
+PA(k), (4)
+using the normalization property of the degree distributio n ∑ kmax
+k=0 PA(k) = ∑ ks
+k=0PA(k) +∑ kmax
+k=ks+1PA(k) = 1 , we can write w as,
+w = p − 1 + ∑ kmax
+k=0 PA(k)
+PA(ks) . (5)
+In layer B, there is not a direct immunization strategy, however, the o verlapped indi-
+viduals that were immunized in layer A, will be also immunized in layer B but at random.
+Thus, there is a fraction pq of random immunized individuals in layer B.
+Propagation process over the immunized multiplex network. After the immunization
+strategy takes place, we start the propagation process by in fecting one randomly chosen
+susceptible (non immunized) individual in layer A. The spreading process then follows the
+SIR dynamics in both layers, and the disease spreads through branches of infection. We
+assume that the transmissibility is the same in both layers a nd thus all individuals in the
+system spread equally. The overlapped nodes in both layers h ave the same state because
+they represent the same individuals.
+One parameter that contains all the information about the br anching process is the
+probabilityQi, that choosing a random selected link, it does not leads to th e inﬁnite branch
+of infected individuals in layer i, with i =A,B . The probabilities QA and QB satisﬁes the
+following self consistent equations,
+QA = 1 −F A
+1 (1) + (1 −q)F A
+1 (1 −T +TQ A) +
++q FA
+1 (1 −T +TQ A)GB
+0 (1 −T +TQ B), (6)
+QB =pq + (1 −q)GB
+1 (1 −T +TQ B) +
++q GB
+1 (1 −T +TQ B)F A
+0 (1 −T +TQ A), (7)
+were GB
+0 (x) = ∑ kmax
+k=kminPB(k)xk is the generating function of the probability to reach a
+node with degree k in layer B andGB
+1 (x) = ∑ kmax
+k=kmin
+kPB (k)
+⟨kB ⟩ xk−1 is the generating function
+for the probability to reach a node of degree k in layer B by following a random chosen link.
+Equation (6) has three terms, since the probability QA to not reach the infected branches
+following a random chosen link in layer A, can be written as the probability that an immu-
+nized individual is reached ( 1 −F A
+1 (1)), plus the conditional probability that the reached
+p-3
+===== PAGE 4 =====
+C. Buono et al.
+individual does not have spread the disease given that it is n ot immunized. This last condi-
+tional probability is split into two terms, depending if the reached individual is one of the
+q overlapped fraction or not. If the individual is only presen t in one layer with probability
+1 −q, the branch will never reach layer B while if the individual is present in both layers
+with probability q, the branch will reach a node in layer B and can expand through the k
+connections of the reached node in that layer. An analogous i nterpretation can be made for
+equation (7).
+The solution of the system (6) and (7) above is given by the int ersection of QA andQB.
+In the criticality, this intersection can be derived by solv ing the equation |J −I| = 0, where
+| | denotes the determinant, I is the identity and J is the Jacobian matrix of the system
+of equations (6) and (7), which elements are Jij =∂Q i/∂Q j, with i =A,B and j =A,B .
+The Jacobian has to be evaluated in QA =QB = 1, since at criticality the disease does not
+spread and there are no branches of infection. There are two d iﬀerent eigenvalues for each
+one of the possible solutions of the system. The stability of each solution can be analyzed
+by the behavior of the eigenvalues, i.e. sink, source or saddle [27]. We ﬁnd that only one of
+the possible solutions is stable and therefore, the epidemi c threshold is given by Tc(q) ≡Tc,
+Tc = F A′
+1 (1) + (κ B − 1)(1 −pq) −
+√
+(F A′
+1 (1) − (κ B − 1)(1 −pq))2 + 4q2F A
+1 (1)2⟨kA⟩⟨kB⟩
+2F A′
+1 (1)(κ B − 1)(1 −pq) − 2q2F A
+1 (1)2⟨kA⟩⟨kB⟩ ,
+(8)
+whereF A′
+1 (1) = dF A
+1 (x)/dx |x=1 andTc = 1/ (κ − 1) whereκ is the total branching factor of
+the multilayer networks.
+0.01 0.2 0.4 0.6 0.8 1q
+0
+0.2
+0.4
+0.6
+0.8
+1
+T
+Epidemic phase
+Epidemic-free phase
+Fig. 1: (Color online) Plane T −q for the SIR model in the multiplex network, when the
+targeted immunization strategy is applied, for diﬀerent va lues of the immunized fraction p.
+Both, layer A andB, has power law degree distributions PA/B ∼k−γ A/B withγA = 2. 5 and
+γB = 3. 5 with kmin = 2 and kmax = 250 . The lines denote the theoretical values of Tc for
+diﬀerent values of q obtained numerically from equation (6) and (7). From top to b ottom
+p = 0. 9; 0. 7; 0. 5; 0. 3; 0. 1; 0. 01. Above the lines the system is in the epidemic phase for each
+value of p, and below it is in the epidemic-free phase where the disease dies out.
+In Fig. 1 we plot the plane T-q obtained from Eq. (8), for diﬀer ent values of p. We
+use a power law degree distribution PA/B ∼k−γ A/B in both layers with exponents γA = 2. 5
+and γB = 3. 5 in layer A and B respectively, where kmin = 2 and kmax = 250 are the
+p-4
+===== PAGE 5 =====
+Immunization strategy for epidemic spreading on multilaye r networks.
+minimum and maximum connectivity. Note that layer A in which the immunization is
+applied is the most heterogeneous layer, however similar re sults are found using diﬀerent
+degree distributions on each layer. The lines represent Tc for many values of p, above the
+lines there is an epidemic phase and below Tc only outbreaks exists (non-epidemic phase).
+Fig. 1 shows that Tc has diﬀerent behaviors with q depending on the value of p.
+Forq = 0 (not shown) the critical threshold corresponds to an isolat ed layer in which the
+disease starts, i.e. layerA and where the critical threshold is given by Tc = 1/F A′
+1 (1), where
+F A′
+1 is not the branching factor of layer A, but gives a measure of the heterogeneity of the
+layer. For q → 0 the process is dominated by the most heterogeneous layer [21 ], therefore,
+the epidemic threshold converges to the threshold of that la yer. In Fig. 1 we can see that
+forp = 0. 01 andq → 0,Tc = 1/F A′
+1 (1), due to the fact that the most heterogeneous layer is
+A, while for p ≥ 0. 1,Tc = 1/G B′
+1 (1) = 1/κ B − 1 wereκ B is the branching factor of layer B.
+From the phase diagram (see Fig 1) we can see that for p < 0. 2, Tc decreases with q,
+this behavior agrees with the expected non-immunized behav ior, since as q increases, the
+total branching factor of the network increases and thus Tc decreases [21]. For p > 0. 2,
+Tc increases with q, due to the fact that layer A gets fragmented and the disease spreads
+through layer B, and as q increases, the fraction p qof the random immunized individuals
+in layer B increases hindering the spreading through layer B and thus, Tc increases with q.
+When the fraction of immunized individuals p q >0. 72, layer B also gets fragmented, and
+the disease can not spread at all, thus, the epidemic regime d isappears as shown in ﬁgure 1
+forp = 0. 9 andq ≳ 0. 79. We can understand this behavior using percolation theory, for the
+targeted percolation process. For this process it was found that [28] the critical value of the
+percolation fraction ˆpc in scale free networks with exponent γ = 2. 5 is ˆpc ≈ 0. 2 such that
+forp> ˆpc the networks is fragmented and for p< ˆpc there is a giant connected cluster, that
+is also the critical threshold corresponding to the targete d immunization strategy in layer
+A. In layer B, there is a random immunization equivalent to a random perco lation process,
+for which the critical value of percolation fraction ˆpc in scale free networks with exponent
+γ = 3. 5 is ˆpc ≈ 0. 72 [28] and corresponds to the critical threshold due to the ran dom
+immunization strategy in layer B. Despite that the targeted immunization strategy is the
+best strategy to stop propagation in isolated networks, in o verlapped multiplex networks it
+is not as eﬃcient due to the fact that the threshold is dominat ed by the most heterogeneous
+network. From the phase diagram we can observe that in order t o suppress the epidemic
+phase one has to immunize more that the 80% of the population in layer A. Thus even if
+networkA is fragmented (p >0. 2) the disease can still propagating in network B which is
+more heterogeneous than the fragmented layer A. Notice that layer B is not fragmented for
+pq < 0. 72.
+However, even if it is hard to stop the epidemic, its size can b e drastically reduced
+compared to the case where no strategy is applied. The size of the epidemic can be computed
+as the total number of recovered individuals in the ﬁnal stat e of the epidemic, and is given
+by,
+RA = q
+[
+1 −p −F A
+0 (1 −T +T Q∗
+A)GB
+0 (1 −T +T Q∗
+B)
+]
++
++ (1 −q)
+[
+1 −p −F A
+0 (1 −T +T Q∗
+A)
+]
+; (9)
+RB = q
+[
+1 −p −F A
+0 (1 −T +T Q∗
+A)GB
+0 (1 −T +T Q∗
+B)
+]
++
++ (1 −q)
+[
+1 −GB
+0 (1 −T +T Q∗
+B)
+]
+, (10)
+where Q∗
+A and Q∗
+B are the non trivial solutions of Eqs. (6) and (7) for T ≳ Tc.
+In ﬁgures 2 (a) and (b) we plot the results of RA andRB as a function of T , obtained both
+theoretically from Eqs. (9) and (10) and from the numerical s imulation. We found a good
+agreement between the theoretical results (lines) and the n umerical simulations (symbols).
+In Fig. 2 (a) we show the results for q = 0. 2 and diﬀerent values of p. If we compare the
+p-5
+===== PAGE 6 =====
+C. Buono et al.
+results with and without strategy (dashed line) we can see th at the immunization strategy
+not only aﬀects the epidemic threshold, but also decreases t he impact of the disease in
+both layers, since at ﬁxed T , both RA and RB decreases with p. For p ≥ 0. 2 layerA gets
+fragmented and the disease never reaches more than 30% of the individuals in that layer,
+however the impact of the disease in layer B is signiﬁcant and even for p = 0. 9, more that
+60% of the individuals in layer B can be infected. Therefore, for an overlapping fraction
+between layers q = 0. 2, the immunization strategy has a major eﬀect on the layer wer e it is
+applied, but does not protect the individuals of other layer s.
+In Fig. 2 (b), we show RA and RB for q = 0. 9, and we can see that even though one
+needs to immunize more than 80% of the individuals to suppress the epidemic phase, the
+impact of the disease in both layers decreases signiﬁcantly with p. We compare RA and
+RB with and without strategy (dashed line) and see that, in this regime, due to the high
+overlapping between layers, the eﬀect of the immunization s trategy on layer B is stronger,
+diﬃculting the propagation through that layer. Therefore w hen the overlapping between
+layers is high, the strategy is more eﬃcient to protect the in dividuals of the whole network.
+0 0.2 0.4 0.6 0.8 1
+T
+0
+0.2
+0.4
+0.6
+0.8RA, RB
+(a)
+0 0.2 0.4 0.6 0.8 1
+T
+0
+0.2
+0.4
+0.6
+0.8
+1
+RA, RB
+(b)
+Fig. 2: (Color online) Fraction of recovered individuals in the ﬁnal state of the epidemics
+for layer A, RA (black), and layer B, RB (red), as a function of T . Both layers have power
+law degree distributions PA/B ∼ k−γ A/B with γA = 2. 5 and γB = 3. 5 for layer A and B
+respectively. Lines denote the theoretical results obtain ed from Eqs. (9) and (10) while
+symbols denote numerical simulation results for layer size N = 10 5 and over 105 network
+realization. a) q = 0 . 2 the dashed lines correspond to the case without immunizatio n
+strategyp = 0, and p = 0. 1; 0. 3; 0. 5; 0. 7; 0. 9 from top to bottom b) q = 0. 9, the dashed lines
+correspond to the case without immunization strategy p = 0, and the full lines and symbols
+corresponds to p = 0. 1; 0. 3; 0. 5; 0. 7; 0. 9 from top to bottom.
+Conclusions. – In this Letter we study, theoretically and via simulations, a targeted
+immunization strategy for epidemic spreading in a partiall y overlapped multiplex network
+composed by two layer with an overlapping fraction q. We immunize a fraction p of individ-
+uals in one layer of the network and study how this process aﬀe cts the propagation of the
+disease through all layers. We found that the branching theo ry gives a good approach of the
+phenomena. For q → 0 the critical threshold of the epidemic is dominated by the th reshold
+of the most heterogeneous layer for all p. When p is smaller than the critical percolation
+threshold of layer A, Tc decreases with q, as in the non immunized model presented in [21].
+Whenp is above the criticality of layer A, this layer gets fragmented and thus the epidemic
+can only spread through layer B. The fraction of immunized individuals in layer B is pq,
+thus asq increasesTc increases. This behavior holds until the fraction pq exceeds the critical
+percolation threshold of layer B. Above this threshold layer B also gets fragmented and
+p-6
+===== PAGE 7 =====
+Immunization strategy for epidemic spreading on multilaye r networks.
+thus, the disease can not spread at all, suppressing the epid emic phase. This regime can
+only be reached if one immunizes more than 80% of individuals. However, even if it is hard
+to stop the epidemic, its size can be drastically reduced com pared to the case where no
+strategy is applied. We found that the immunization strateg y has a major eﬀect on the
+layer were it is applied, but does not eﬃciently protect the i ndividuals of other layers.
+Real networks of networks such as the world wide port network and a world wide air-
+port network [29] have assortative degree-degree correlat ion between networks, i.e. biggest
+airports are connected with bigger ports. In order to have a r ealistic scenario we should
+consider degree-degree correlation between layers. If the correlation is assortative, then the
+immunization strategy in layer B will be also targeted and thus the strategy would be more
+eﬀective since layer B will get fragmented easier. In a future work, we will study de eply the
+eﬀects of correlations between layers in the epidemic sprea ding and immunization strategies
+in multilayer networks.
+After this letter was submitted a similar strategy was publi shed by D. Zhao et. al in
+[30].
+∗ ∗ ∗
+This work was ﬁnancially supported by UNMdP and FONCyT (Pict 0429/2013). The
+authors thank Lucas D. Valdez for his useful comments and dis cussions.
+REFERENCES
+[1] Gao J., Buldyrev S. V., Ha vlin S. and Stanley H. E. , Phys. Rev. Lett. , 107 (2011)
+195701.
+[2] Gao J., Buldyrev S. V., Stanley H. E. and Ha vlin S., Nature Physics , 8 (2012) .
+[3] Dong G., Gao J., Du R., Tian L., Stanley H. E. and Ha vlin S., Phys. Rev. E , 87
+(2013) 052804.
+[4] V aldez L. D., Macri P. A., Stanley H. E. and Braunstein L. A. , Phys. Rev. E , 88
+(2013) 050803(R).
+[5] Lee K.-M., Kim J. Y., Cho W. K., Goh K.-I. and Kim I.-M. , New J. Phys. , 14 (2012)
+033027.
+[6] Brummitt C. D., Lee K.-M. and Goh K.-I. , Phys. Rev. E , 85 (2012) 045102(R).
+[7] Gómez S., Díaz-Guilera A., Gómez-Gardeñes J., Pérez-Vicen te C. J., Moreno Y.
+and Arenas A. , Phys. Rev. Lett. , 110 (2013) 028701.
+[8] Kim J. Y. and Goh K.-I. , Phys. Rev. Lett. , 111 (2013) 058702.
+[9] Cozzo E., Arenas A. and Moreno Y. , Phys. Rev. E , 86 (2012) 036115.
+[10] Gómez-Gardeñes J., Reinares I., Arenas A. and Floria L. M. , Nature Scientiﬁc Re-
+ports, 10.1038 (2012) srep00620.
+[11] Kivelä M., Arenas A., Bar thelemy M., Gleeson J. P., Moreno Y. and Por ter
+M. A. , Multilayer Networks http://arxiv.org/abs/1309.7233 (2013).
+[12] Boccaletti S., Bianconi G., Criado R., del Genio C., Gómez-G ardeñes J., Ro-
+mance M., Sendiña-Nadal I., W ang Z. and Zanin M. , Physics Reports, 544 (2014) 1.
+[13] Halu A., Mukherjee S. and Bianconi G. , Phys. Rev. E , 89 (2014) 012806.
+[14] Barigozzi M., F agiolo G. and Garlaschelli D. , Phys. Rev. E , 81 (2010) 046104.
+[15] Barigozzi M., F agiolo G. and Mangioni G. , Physica A , 390 (2011) 2051.
+[16] Dickison M., Ha vlin S. and Stanley H. E. , Phys. Rev. E , 85 (2012) 066109.
+[17] Marceau V., Noël P., Héber t-Dufresne L., Allard A. and Dubé L. J. , Phys. Rev. E ,
+84 (2011) 026105.
+[18] Yagan O., Qian D., Zhang J. and Cochran D. , IEEE JSAC Special Issue on Network
+Science, 31 (2013) 1038.
+[19] Cozzo E., Baños R. A., Meloni S. and Moreno Y. , Phys. Rev. E , 88 (2013) 050801(R).
+[20] W ang Zhen, Szolnoki Attila and Perc Ma tjaz, Sci. Rep. , 3 (2013) 2470.
+[21] Buono C., Zuzek L. G. A., Macri P. A. and Braunstein L. A. , PLoS ONE , 9 (2014)
+e9220.
+p-7
+===== PAGE 8 =====
+C. Buono et al.
+[22] Bailey N. T. J. , The Mathematical Theory of Infectious Diseases (Griﬃn, London) 1975.
+[23] Colizza V., Barra t A., Bar thlemy M. and Vespignani A. , Proc. Natl. Acad. Sci. USA ,
+103 (2006) 2015.
+[24] Colizza V. and Vespignani A. , Phys.Rev.Lett., 99 (2007) 148701.
+[25] Calla w a y D., Newman M. E. J., Stroga tz S. H. and W a tts D. J., Phys. Rev. Lett. , 85
+(2000) 5468.
+[26] Newman M. E. J., Stroga tz S. H. and W a tts D. J., Phys. Rev. E , 64 (2001) 026118.
+[27] Alligood K. T., Sauer T. D. and Yorke J. A. , CHAOS: An Introduction to Dynamical
+Systems (Springer) 1997.
+[28] Cohen R. and Ha vlin S., Complex Networks: Structure, Robustness and Function (Cam-
+bridge University Press) 2010.
+[29] P arshani R., Rozenbla t C., Ietri D., Ducruet C. and Ha vlin S., EPL, 92 (2010) 68002.
+[30] Zhao D., W ang L., Li S., W ang Z., W ang L. and Gao B. , PLOS ONE , 9 (2014) e112018.
+p-8
